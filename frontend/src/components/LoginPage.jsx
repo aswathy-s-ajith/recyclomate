@@ -71,36 +71,75 @@ const styles = {
     cursor: 'pointer',
     transition: 'background-color 0.3s ease',
   },
-  loginButtonHover: {
-    backgroundColor: '#45a049',
-  }
+  errorMessage: {
+    color: 'red',
+    marginBottom: '10px',
+    textAlign: 'center',
+  },
+  successMessage: {
+    color: 'green',
+    marginBottom: '10px',
+    textAlign: 'center',
+  },
 };
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [userType, setUserType] = useState('User');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log('Logging in with:', { email, password, userType });
+    setError('');
+    setSuccess('');
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, userType })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        setError(data.message || "Login failed. Please try again.");
+        return;
+      }
+
+      setSuccess("✅ Login successful!");
+      console.log("User logged in:", data);
+
+      // Store JWT in localStorage (optional, if backend returns a token)
+      if (data.token) {
+        localStorage.setItem("token", data.token);
+      }
+
+    } catch (err) {
+      setError("Something went wrong. Please try again later.");
+      console.error(err);
+    }
   };
 
   return (
     <div style={styles.loginContainer}>
       <div style={styles.loginHeader}>
-        {/* You need a logo component or image here. Using a placeholder for now. */}
         <span role="img" aria-label="Recycling Symbol" style={{ fontSize: '50px', marginRight: '10px' }}>♻️</span>
         <span style={styles.logoText}>RecycloMate</span>
       </div>
       <h2 style={styles.loginTitle}>Login</h2>
       <form onSubmit={handleLogin} style={styles.loginForm}>
+        {error && <div style={styles.errorMessage}>{error}</div>}
+        {success && <div style={styles.successMessage}>{success}</div>}
+
         <div style={styles.inputGroup}>
           <input
-            type="email"
-            placeholder="Email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
             required
             style={styles.loginInput}
           />
