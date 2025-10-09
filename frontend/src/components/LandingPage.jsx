@@ -1,4 +1,5 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 // Import all images from the assets folder
 import logo from '../assets/logo.png';
@@ -46,6 +47,19 @@ const styles = {
   navLinks: {
     display: 'flex',
     gap: '30px',
+  },
+  loginButton: {
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    padding: '10px 18px',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '16px',
+    cursor: 'pointer',
+    textDecoration: 'none',
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   navLink: {
     textDecoration: 'none',
@@ -273,6 +287,7 @@ const LandingPage = () => {
             <a href="#home" style={styles.navLink}>Home</a>
             <a href="#about" style={styles.navLink}>About</a>
             <a href="#contact" style={styles.navLink}>Contact</a>
+            <Link to="/login" style={styles.loginButton}>Login</Link>
           </nav>
         </header>
 
