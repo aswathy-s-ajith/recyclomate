@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 const styles = {
   loginContainer: {
@@ -80,6 +81,18 @@ const styles = {
     color: 'green',
     marginBottom: '10px',
     textAlign: 'center',
+  },
+  signupRow: {
+    marginTop: '14px',
+    textAlign: 'center',
+    fontSize: '14px',
+    color: '#555',
+  },
+  signupLink: {
+    marginLeft: '6px',
+    color: '#4CAF50',
+    textDecoration: 'none',
+    fontWeight: '600',
   },
 };
 
@@ -168,6 +181,11 @@ const Login = () => {
         <button type="submit" style={styles.loginButton}>
           Login
         </button>
+
+        <div style={styles.signupRow}>
+          <span>Already have an account ?</span>
+          <Link to="/signup" style={styles.signupLink}>Sign up .</Link>
+        </div>
       </form>
     </div>
   );
