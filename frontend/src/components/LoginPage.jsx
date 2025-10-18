@@ -104,37 +104,42 @@ const Login = () => {
   const [success, setSuccess] = useState('');
 
   const handleLogin = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setError('');
+  setSuccess('');
 
-    try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password, userType })
-      });
+  try {
+    // ✅ Change userType → role
+    // ✅ Send lowercase role values that match backend logic
+    const response = await fetch("http://localhost:5000/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ 
+        username, 
+        password, 
+        role: userType.toLowerCase() // 👈 important fix
+      })
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        setError(data.message || "Login failed. Please try again.");
-        return;
-      }
-
-      setSuccess("✅ Login successful!");
-      console.log("User logged in:", data);
-
-      // Store JWT in localStorage (optional, if backend returns a token)
-      if (data.token) {
-        localStorage.setItem("token", data.token);
-      }
-
-    } catch (err) {
-      setError("Something went wrong. Please try again later.");
-      console.error(err);
+    if (!response.ok) {
+      setError(data.message || "Login failed. Please try again.");
+      return;
     }
-  };
+
+    setSuccess("✅ Login successful!");
+    console.log("User logged in:", data);
+
+    if (data.token) {
+      localStorage.setItem("token", data.token);
+    }
+  } catch (err) {
+    setError("Something went wrong. Please try again later.");
+    console.error(err);
+  }
+};
+
 
   return (
     <div style={styles.loginContainer}>
@@ -173,10 +178,11 @@ const Login = () => {
             onChange={(e) => setUserType(e.target.value)}
             style={styles.loginSelect}
           >
-            <option value="User">User</option>
-            <option value="Admin">Admin</option>
-            <option value="Agent">Agent</option>
+            <option value="user">User</option>
+            <option value="driver">Driver</option>
+            <option value="admin">Admin</option>
           </select>
+
         </div>
         <button type="submit" style={styles.loginButton}>
           Login
