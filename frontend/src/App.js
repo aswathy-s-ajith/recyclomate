@@ -1,19 +1,12 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import LandingPage from "./components/LandingPage";
-import LoginPage from "./components/LoginPage";
+import PickupAgentProfile from "./components/UserDashboard";
+import UserDashboard from "./components/UserDashboard";
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        {/* Default route shows LandingPage */}
-        <Route path="/" element={<LandingPage />} />
-
-        {/* Login page on separate route */}
-        <Route path="/login" element={<LoginPage />} />
-      </Routes>
-    </Router>
+    <div>
+      <UserDashboard />
+    </div>
   );
 }
 
