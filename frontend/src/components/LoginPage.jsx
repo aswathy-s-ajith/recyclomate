@@ -1,153 +1,167 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 
 const styles = {
   loginContainer: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: '100vh',
-    fontFamily: 'Arial, sans-serif',
-    backgroundColor: '#f0f2f5',
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: "100vh",
+    fontFamily: "Arial, sans-serif",
+    backgroundColor: "#f0f2f5",
   },
   loginHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    marginBottom: '30px',
+    display: "flex",
+    alignItems: "center",
+    marginBottom: "30px",
   },
   logoText: {
-    fontSize: '2em',
-    fontWeight: 'bold',
-    color: '#333',
+    fontSize: "2em",
+    fontWeight: "bold",
+    color: "#333",
   },
   loginTitle: {
-    fontSize: '2.5em',
-    marginBottom: '20px',
-    color: '#333',
+    fontSize: "2.5em",
+    marginBottom: "20px",
+    color: "#333",
   },
   loginForm: {
-    display: 'flex',
-    flexDirection: 'column',
-    width: '90%',
-    maxWidth: '400px',
-    backgroundColor: '#fff',
-    padding: '40px',
-    borderRadius: '10px',
-    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+    display: "flex",
+    flexDirection: "column",
+    width: "90%",
+    maxWidth: "400px",
+    backgroundColor: "#fff",
+    padding: "40px",
+    borderRadius: "10px",
+    boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
   },
   inputGroup: {
-    marginBottom: '20px',
+    marginBottom: "20px",
   },
   loginInput: {
-    width: '100%',
-    padding: '15px',
-    fontSize: '1em',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    boxSizing: 'border-box',
+    width: "100%",
+    padding: "15px",
+    fontSize: "1em",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    boxSizing: "border-box",
   },
   loginSelect: {
-    width: '100%',
-    padding: '15px',
-    fontSize: '1em',
-    border: '1px solid #ccc',
-    borderRadius: '8px',
-    boxSizing: 'border-box',
-    WebkitAppearance: 'none',
-    MozAppearance: 'none',
-    appearance: 'none',
+    width: "100%",
+    padding: "15px",
+    fontSize: "1em",
+    border: "1px solid #ccc",
+    borderRadius: "8px",
+    boxSizing: "border-box",
+    appearance: "none",
     backgroundImage: `url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23888"><path d="M7 10l5 5 5-5z"/></svg>')`,
-    backgroundRepeat: 'no-repeat',
-    backgroundPosition: 'right 10px center',
-    backgroundSize: '15px',
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: "right 10px center",
+    backgroundSize: "15px",
   },
   loginButton: {
-    padding: '15px',
-    backgroundColor: '#4CAF50',
-    color: 'white',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1.2em',
-    cursor: 'pointer',
-    transition: 'background-color 0.3s ease',
+    padding: "15px",
+    backgroundColor: "#4CAF50",
+    color: "white",
+    border: "none",
+    borderRadius: "8px",
+    fontSize: "1.2em",
+    cursor: "pointer",
+    transition: "background-color 0.3s ease",
   },
   errorMessage: {
-    color: 'red',
-    marginBottom: '10px',
-    textAlign: 'center',
+    color: "red",
+    marginBottom: "10px",
+    textAlign: "center",
   },
   successMessage: {
-    color: 'green',
-    marginBottom: '10px',
-    textAlign: 'center',
+    color: "green",
+    marginBottom: "10px",
+    textAlign: "center",
   },
   signupRow: {
-    marginTop: '14px',
-    textAlign: 'center',
-    fontSize: '14px',
-    color: '#555',
+    marginTop: "14px",
+    textAlign: "center",
+    fontSize: "14px",
+    color: "#555",
   },
   signupLink: {
-    marginLeft: '6px',
-    color: '#4CAF50',
-    textDecoration: 'none',
-    fontWeight: '600',
+    marginLeft: "6px",
+    color: "#4CAF50",
+    textDecoration: "none",
+    fontWeight: "600",
   },
 };
 
 const Login = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [userType, setUserType] = useState('User');
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [userType, setUserType] = useState("user");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const navigate = useNavigate();
 
   const handleLogin = async (e) => {
-  e.preventDefault();
-  setError('');
-  setSuccess('');
+    e.preventDefault();
+    setError("");
+    setSuccess("");
 
-  try {
-    // ✅ Change userType → role
-    // ✅ Send lowercase role values that match backend logic
-    const response = await fetch("http://localhost:5000/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ 
-        username, 
-        password, 
-        role: userType.toLowerCase() // 👈 important fix
-      })
-    });
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username,
+          password,
+          role: userType.toLowerCase(),
+        }),
+      });
 
-    const data = await response.json();
+      const data = await response.json();
 
-    if (!response.ok) {
-      setError(data.message || "Login failed. Please try again.");
-      return;
-    }
+      if (!response.ok) {
+        setError(data.message || "Login failed. Please try again.");
+        return;
+      }
 
-    setSuccess("✅ Login successful!");
-    console.log("User logged in:", data);
-
-    if (data.token) {
+      // ✅ Store token + user data
       localStorage.setItem("token", data.token);
-    }
-  } catch (err) {
-    setError("Something went wrong. Please try again later.");
-    console.error(err);
-  }
-};
+      localStorage.setItem("user", JSON.stringify(data.user));
 
+      setSuccess("✅ Login successful!");
+
+      // ✅ Redirect based on role
+      setTimeout(() => {
+        if (data.user.role === "user") {
+          navigate("/dashboard");
+        } else if (data.user.role === "driver") {
+          navigate("/driverdashboard");
+        } else if (data.user.role === "admin") {
+          navigate("/admindashboard");
+        }
+      }, 800);
+    } catch (err) {
+      setError("Something went wrong. Please try again later.");
+      console.error(err);
+    }
+  };
 
   return (
     <div style={styles.loginContainer}>
       <div style={styles.loginHeader}>
-        <span role="img" aria-label="Recycling Symbol" style={{ fontSize: '50px', marginRight: '10px' }}>♻️</span>
+        <span
+          role="img"
+          aria-label="Recycling Symbol"
+          style={{ fontSize: "50px", marginRight: "10px" }}
+        >
+          ♻️
+        </span>
         <span style={styles.logoText}>RecycloMate</span>
       </div>
+
       <h2 style={styles.loginTitle}>Login</h2>
+
       <form onSubmit={handleLogin} style={styles.loginForm}>
         {error && <div style={styles.errorMessage}>{error}</div>}
         {success && <div style={styles.successMessage}>{success}</div>}
@@ -162,6 +176,7 @@ const Login = () => {
             style={styles.loginInput}
           />
         </div>
+
         <div style={styles.inputGroup}>
           <input
             type="password"
@@ -172,6 +187,7 @@ const Login = () => {
             style={styles.loginInput}
           />
         </div>
+
         <div style={styles.inputGroup}>
           <select
             value={userType}
@@ -182,15 +198,17 @@ const Login = () => {
             <option value="driver">Driver</option>
             <option value="admin">Admin</option>
           </select>
-
         </div>
+
         <button type="submit" style={styles.loginButton}>
           Login
         </button>
 
         <div style={styles.signupRow}>
-          <span>Dont have an account ?</span>
-          <Link to="/register-user" style={styles.signupLink}>Sign up .</Link>
+          <span>Don’t have an account?</span>
+          <Link to="/register-user" style={styles.signupLink}>
+            Sign up.
+          </Link>
         </div>
       </form>
     </div>
