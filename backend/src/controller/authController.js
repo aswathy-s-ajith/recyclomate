@@ -5,7 +5,13 @@ const User=require("../models/userModel");
 
 const register = async (req, res) => {
     try{
-    const {username , password , role} = req.body;
+
+        const {username , password , role} = req.body;
+        const existingUser = await User.findOne({ username });
+        if (existingUser) {
+        return res.status(400).json({ message: "Username already exists" });
+        }
+    
     const hashedPassword=await bcrypt.hash(password,10);
 
         const newUser = new User({
@@ -42,6 +48,8 @@ try{
     res.status(200).json({token});
 }catch(err){
     res.status(500).json({message:`something went wrong`});
+    console.error("Login Error:", err); // Log the actual error
+    res.status(500).json({message:`Something went wrong during login.`});
 }
     
 };
