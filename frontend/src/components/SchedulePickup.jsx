@@ -1,4 +1,143 @@
 import React, { useState } from "react";
+import { Recycle } from 'lucide-react';
+
+const styles = {
+  container: {
+    minHeight: '100vh',
+    backgroundColor: '#f0f2f5',
+    fontFamily: 'Arial, sans-serif',
+  },
+  header: {
+    backgroundColor: '#ffffff',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+    padding: '1rem 1.5rem',
+  },
+  headerContent: {
+    maxWidth: '1280px',
+    margin: '0 auto',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  logoContainer: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
+  logoIcon: {
+    backgroundColor: '#22c55e',
+    width: '2.5rem',
+    height: '2.5rem',
+    borderRadius: '50%',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  logoText: {
+    fontSize: '1.5rem',
+    fontWeight: 'bold',
+    color: '#111827',
+  },
+  formWrapper: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: '40px 20px',
+  },
+  formContainer: {
+    maxWidth: '500px',
+    width: '100%',
+    backgroundColor: '#fff',
+    padding: '40px',
+    borderRadius: '10px',
+    boxShadow: '0 4px 8px rgba(0, 0, 0, 0.1)',
+  },
+  formTitle: {
+    fontSize: '2em',
+    marginBottom: '30px',
+    color: '#333',
+    textAlign: 'center',
+  },
+  label: {
+    display: 'block',
+    marginBottom: '8px',
+    color: '#555',
+    fontWeight: '500',
+  },
+  inputGroup: {
+    marginBottom: '20px',
+  },
+  input: {
+    width: '100%',
+    padding: '12px',
+    fontSize: '1em',
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    boxSizing: 'border-box',
+  },
+  select: {
+    width: '100%',
+    padding: '12px',
+    fontSize: '1em',
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    boxSizing: 'border-box',
+    backgroundColor: 'white',
+    cursor: 'pointer',
+  },
+  checkboxContainer: {
+    border: '1px solid #ccc',
+    borderRadius: '8px',
+    padding: '12px',
+    maxHeight: '150px',
+    overflowY: 'auto',
+    marginTop: '8px',
+    backgroundColor: '#fafafa',
+  },
+  checkboxItem: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '6px 0',
+  },
+  checkbox: {
+    marginRight: '10px',
+    width: '18px',
+    height: '18px',
+    cursor: 'pointer',
+  },
+  checkboxLabel: {
+    cursor: 'pointer',
+    color: '#333',
+  },
+  submitButton: {
+    width: '100%',
+    padding: '15px',
+    marginTop: '25px',
+    backgroundColor: '#4CAF50',
+    color: 'white',
+    border: 'none',
+    borderRadius: '8px',
+    fontSize: '1.2em',
+    cursor: 'pointer',
+    transition: 'background-color 0.3s ease',
+    fontWeight: '500',
+  },
+  selectedWasteBox: {
+    marginTop: '20px',
+    padding: '15px',
+    backgroundColor: '#f0f9f0',
+    borderRadius: '8px',
+    border: '1px solid #c6e6c6',
+  },
+  selectedWasteLabel: {
+    fontWeight: 'bold',
+    color: '#2d5f2d',
+    marginBottom: '5px',
+  },
+  selectedWasteText: {
+    color: '#555',
+  },
+};
 
 function SchedulePickup() {
   // Example saved addresses
@@ -31,133 +170,134 @@ function SchedulePickup() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    alert("Submitted Successfully!");
-    // No redirect yet
+    const pickupData = {
+      wasteTypes: selectedWaste,
+      wasteDetail,
+      address,
+      pickupDate,
+      pickupTime,
+    };
+    console.log('Pickup scheduled:', pickupData);
+    alert("Pickup Scheduled Successfully!");
+    // Add your API call here
   };
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      style={{
-        maxWidth: "400px",
-        margin: "20px auto",
-        padding: "20px",
-        border: "1px solid #ccc",
-        borderRadius: "8px",
-      }}
-    >
-      <h2 style={{ textAlign: "center" }}>Schedule Pickup</h2>
-
-      {/* Waste Type Checkboxes */}
-      <label>
-        Select Waste Type:
-        <div
-          style={{
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            padding: "10px",
-            maxHeight: "120px",
-            overflowY: "auto",
-            marginTop: "5px",
-            marginBottom: "15px",
-          }}
-        >
-          {wasteOptions.map((waste) => (
-            <div key={waste}>
-              <input
-                type="checkbox"
-                id={waste}
-                checked={selectedWaste.includes(waste)}
-                onChange={() => handleCheckboxChange(waste)}
-              />
-              <label htmlFor={waste} style={{ marginLeft: "8px" }}>
-                {waste}
-              </label>
+    <div style={styles.container}>
+      {/* Header */}
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <div style={styles.logoContainer}>
+            <div style={styles.logoIcon}>
+              <Recycle style={{ width: '1.5rem', height: '1.5rem', color: 'white' }} />
             </div>
-          ))}
+            <h1 style={styles.logoText}>RecycloMate</h1>
+          </div>
         </div>
-      </label>
+      </header>
 
-      {/* Optional Waste Detail */}
-      <label>
-        Waste Detail (optional):
-        <input
-          type="text"
-          value={wasteDetail}
-          onChange={(e) => setWasteDetail(e.target.value)}
-          placeholder="Enter any specific details"
-          style={{ width: "100%", padding: "8px", margin: "5px 0 15px 0" }}
-        />
-      </label>
+      {/* Form */}
+      <div style={styles.formWrapper}>
+        <div style={styles.formContainer}>
+          <h2 style={styles.formTitle}>Schedule Pickup</h2>
 
-      {/* Address Dropdown */}
-      <label>
-        Select Address:
-        <select
-          value={address}
-          onChange={(e) => setAddress(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "5px 0 15px 0" }}
-        >
-          {savedAddresses.map((addr, idx) => (
-            <option key={idx} value={addr}>
-              {addr}
-            </option>
-          ))}
-        </select>
-      </label>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Select Waste Type *</label>
+            <div style={styles.checkboxContainer}>
+              {wasteOptions.map((waste) => (
+                <div key={waste} style={styles.checkboxItem}>
+                  <input
+                    type="checkbox"
+                    id={waste}
+                    checked={selectedWaste.includes(waste)}
+                    onChange={() => handleCheckboxChange(waste)}
+                    style={styles.checkbox}
+                  />
+                  <label htmlFor={waste} style={styles.checkboxLabel}>
+                    {waste}
+                  </label>
+                </div>
+              ))}
+            </div>
+          </div>
 
-      {/* Date Dropdown */}
-      <label>
-        Select Pickup Date:
-        <select
-          value={pickupDate}
-          onChange={(e) => setPickupDate(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "5px 0 15px 0" }}
-        >
-          {availableDates.map((date, idx) => (
-            <option key={idx} value={date}>
-              {date}
-            </option>
-          ))}
-        </select>
-      </label>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Waste Detail (optional)</label>
+            <input
+              type="text"
+              value={wasteDetail}
+              onChange={(e) => setWasteDetail(e.target.value)}
+              placeholder="Enter any specific details"
+              style={styles.input}
+            />
+          </div>
 
-      {/* Time Dropdown */}
-      <label>
-        Select Pickup Time:
-        <select
-          value={pickupTime}
-          onChange={(e) => setPickupTime(e.target.value)}
-          style={{ width: "100%", padding: "8px", margin: "5px 0 15px 0" }}
-        >
-          {timeSlots.map((slot, idx) => (
-            <option key={idx} value={slot}>
-              {slot}
-            </option>
-          ))}
-        </select>
-      </label>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Select Address *</label>
+            <select
+              value={address}
+              onChange={(e) => setAddress(e.target.value)}
+              style={styles.select}
+            >
+              {savedAddresses.map((addr, idx) => (
+                <option key={idx} value={addr}>
+                  {addr}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      <button
-        type="submit"
-        style={{
-          width: "100%",
-          padding: "10px",
-          marginTop: "20px",
-          backgroundColor: "#4CAF50",
-          color: "white",
-          border: "none",
-          borderRadius: "4px",
-          cursor: "pointer",
-        }}
-      >
-        Schedule Pickup
-      </button>
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Select Pickup Date *</label>
+            <select
+              value={pickupDate}
+              onChange={(e) => setPickupDate(e.target.value)}
+              style={styles.select}
+            >
+              {availableDates.map((date, idx) => (
+                <option key={idx} value={date}>
+                  {date}
+                </option>
+              ))}
+            </select>
+          </div>
 
-      <div style={{ marginTop: "15px" }}>
-        <strong>Selected Waste:</strong> {selectedWaste.join(", ") || "None"}
+          <div style={styles.inputGroup}>
+            <label style={styles.label}>Select Pickup Time *</label>
+            <select
+              value={pickupTime}
+              onChange={(e) => setPickupTime(e.target.value)}
+              style={styles.select}
+            >
+              {timeSlots.map((slot, idx) => (
+                <option key={idx} value={slot}>
+                  {slot}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            style={styles.submitButton}
+            onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
+            onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
+          >
+            Schedule Pickup
+          </button>
+
+          {selectedWaste.length > 0 && (
+            <div style={styles.selectedWasteBox}>
+              <div style={styles.selectedWasteLabel}>Selected Waste Types:</div>
+              <div style={styles.selectedWasteText}>
+                {selectedWaste.join(", ")}
+              </div>
+            </div>
+          )}
+        </div>
       </div>
-    </form>
+    </div>
   );
 }
 
