@@ -184,7 +184,7 @@ const Login = () => {
 
         <div style={styles.signupRow}>
           <span>Dont have an account ?</span>
-          <Link to="/signup" style={styles.signupLink}>Sign up .</Link>
+          <Link to="/register-user" style={styles.signupLink}>Sign up .</Link>
         </div>
       </form>
     </div>

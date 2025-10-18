@@ -14,7 +14,7 @@ function App() {
 
         {/* Login page on separate route */}
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/signup" element={<SignupUser />} />
+        <Route path="/register-user" element={<SignupUser />} />
 
       </Routes>
     </Router>
