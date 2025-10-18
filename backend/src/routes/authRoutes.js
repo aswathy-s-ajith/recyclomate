@@ -1,9 +1,10 @@
 const express=require("express");
 
-const {register , login} =require("../controller/authController")
+const {registerUser,registerDriver, login} =require("../controller/authController")
 const router=express.Router();
 
-router.post("/register",register);
+router.post("/register-user",registerUser);
+router.post("/register-driver",registerDriver);
 router.post("/login",login);
 
 module.exports=router;
