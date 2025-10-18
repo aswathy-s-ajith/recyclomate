@@ -87,7 +87,8 @@ const SignupUser = () => {
     username: '',
     password: '',
     phoneNumber: '',
-    address: ''
+    address: '',
+    role: 'User', // 👈 fixed role
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -122,14 +123,21 @@ const SignupUser = () => {
       const res = await fetch('http://localhost:5000/api/auth/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Signup failed');
 
       setSuccess('✅ Account created successfully! You can now log in.');
-      setFormData({ email: '', username: '', password: '', phoneNumber: '', address: '' });
+      setFormData({
+        email: '',
+        username: '',
+        password: '',
+        phoneNumber: '',
+        address: '',
+        role: 'User',
+      });
     } catch (err) {
       setError(err.message || 'Something went wrong');
     } finally {
@@ -144,7 +152,7 @@ const SignupUser = () => {
         <span style={styles.logoText}>RecycloMate</span>
       </div>
 
-      <h2 style={styles.signupTitle}>Sign Up</h2>
+      <h2 style={styles.signupTitle}>Sign Up as User</h2>
 
       <form onSubmit={handleSubmit} style={styles.signupForm}>
         {error && <div style={styles.errorMessage}>{error}</div>}
@@ -207,6 +215,23 @@ const SignupUser = () => {
             style={styles.signupInput}
           />
         </div>
+
+        <div style={styles.inputGroup}>
+            <label style={{ marginBottom: '5px', color: '#555', fontWeight: '500' }}>Role</label>
+            <input
+                type="text"
+                name="role"
+                value="User"
+                readOnly // 👈 prevents editing
+                style={{
+                ...styles.signupInput,
+                backgroundColor: '#e9ecef', // light gray to indicate read-only
+                cursor: 'not-allowed'
+                }}
+            />
+        </div>
+
+        
 
         <button type="submit" style={styles.signupButton} disabled={loading}>
           {loading ? 'Creating Account...' : 'Sign Up'}
