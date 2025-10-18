@@ -183,7 +183,7 @@ const Login = () => {
         </button>
 
         <div style={styles.signupRow}>
-          <span>Already have an account ?</span>
+          <span>Dont have an account ?</span>
           <Link to="/signup" style={styles.signupLink}>Sign up .</Link>
         </div>
       </form>
