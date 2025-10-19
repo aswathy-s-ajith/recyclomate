@@ -41,7 +41,21 @@ router.get("/me", verifyToken, async (req, res) => {
       return res.status(404).json({ message: `${req.user.role} not found` });
     }
 
-    res.json({ user: account });
+    // Default nextPickup for user role
+    let nextPickup = null;
+    if (req.user.role === "user") {
+      const Pickup = require("../models/pickupModel"); // Make sure to require your pickup model
+      nextPickup = await Pickup.findOne({ user: req.user.id, status: "Scheduled" }).sort({ date: 1 }) || null;
+    }
+
+    // Default ecoImpact
+    const ecoImpact = {
+      plastic: account.plasticPoints || 0,
+      paper: account.paperPoints || 0,
+      glass: account.glassPoints || 0,
+    };
+
+    res.json({ user: account, nextPickup, ecoImpact });
   } catch (err) {
     console.error("GET /me error:", err);
     res.status(500).json({ message: "Server error" });

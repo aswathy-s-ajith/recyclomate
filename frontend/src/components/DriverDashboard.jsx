@@ -41,7 +41,6 @@ function DriverDashboard() {
           headers: { Authorization: `Bearer ${token}` },
         });
         const dataPickups = await resPickups.json();
-
         setAssignedPickups(Array.isArray(dataPickups) ? dataPickups : []);
       } catch (err) {
         console.error("Fetch error:", err);
@@ -54,6 +53,8 @@ function DriverDashboard() {
     fetchDriverData();
   }, []);
 
+
+  
   if (loading) return <p style={{ textAlign: "center" }}>Loading...</p>;
   if (!agentInfo) return <p style={{ textAlign: "center" }}>No driver data found.</p>;
 
@@ -84,6 +85,37 @@ function DriverDashboard() {
 
   const toggleAvailability = () => {
     setAgentInfo({ ...agentInfo, available: !agentInfo.available });
+  };
+
+  const handleCompletePickup = async (pickupId, ecoPoints) => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/pickups/${pickupId}/complete`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ ecoPoints }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "Failed to mark completed");
+        return;
+      }
+
+      // Update UI
+      setAssignedPickups(prev =>
+        prev.map(p => (p._id === pickupId ? { ...p, status: "Completed", ecoPoints: data.ecoPoints } : p))
+      );
+      alert(`Pickup completed! ${data.ecoPoints} points added to user. Total: ${data.userEcoPoints}`);
+    } catch (err) {
+      console.error(err);
+      alert("Something went wrong while completing pickup");
+    }
   };
 
   return (
@@ -129,17 +161,35 @@ function DriverDashboard() {
                 <th style={{ padding: "8px" }}>Type</th>
                 <th style={{ padding: "8px" }}>Address</th>
                 <th style={{ padding: "8px" }}>Status</th>
+                <th style={{ padding: "8px" }}>Action</th>
               </tr>
             </thead>
             <tbody>
               {assignedPickups.map((pickup) => (
                 <tr key={pickup._id} style={{ borderBottom: "1px solid #eee", textAlign: "center" }}>
-                  <td style={{ padding: "8px" }}>{pickup.date}</td>
-                  <td style={{ padding: "8px" }}>{pickup.time}</td>
-                  <td style={{ padding: "8px" }}>{Array.isArray(pickup.type) ? pickup.type.join(", ") : pickup.type}</td>
-                  <td style={{ padding: "8px" }}>{pickup.address}</td>
-                  <td style={{ padding: "8px", color: pickup.status === "Completed" ? "#4CAF50" : "#333", fontWeight: "bold" }}>
-                    {pickup.status}
+                  <td>{pickup.date}</td>
+                  <td>{pickup.time}</td>
+                  <td>{Array.isArray(pickup.type) ? pickup.type.join(", ") : pickup.type}</td>
+                  <td>{pickup.address}</td>
+                  <td style={{ color: pickup.status === "Completed" ? "#4CAF50" : "#333", fontWeight: "bold" }}>{pickup.status}</td>
+                  <td>
+                    {pickup.status !== "Completed" && (
+                      <div>
+                        <input
+                          type="number"
+                          placeholder="Eco points"
+                          min={0}
+                          style={{ width: "60px", marginRight: "5px" }}
+                          onChange={(e) => pickup.manualEcoPoints = Number(e.target.value)}
+                        />
+                        <button
+                          style={{ ...greenButtonStyle, padding: "5px 10px" }}
+                          onClick={() => handleCompletePickup(pickup._id, pickup.manualEcoPoints || 0)}
+                        >
+                          Complete
+                        </button>
+                      </div>
+                    )}
                   </td>
                 </tr>
               ))}

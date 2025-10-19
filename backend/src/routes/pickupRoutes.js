@@ -50,37 +50,29 @@ router.get('/assigned', verifyToken, async (req, res) => {
 });
 
 // ✅ Mark pickup as completed & assign eco points
+// ✅ Mark pickup as completed & assign eco points manually
 router.patch('/:id/complete', verifyToken, async (req, res) => {
   const { id } = req.params;
+  const { ecoPoints } = req.body; // driver can send ecoPoints manually
 
   try {
     const pickup = await Pickup.findById(id).populate('user');
     if (!pickup) return res.status(404).json({ message: 'Pickup not found' });
 
-    // Eco points logic for single type
-    let ecoPoints = 0;
-    switch (pickup.type) {
-      case 'Plastic': ecoPoints = 10; break;
-      case 'Paper': ecoPoints = 5; break;
-      case 'Glass': ecoPoints = 8; break;
-      case 'Metal': ecoPoints = 12; break;
-      case 'E-Waste': ecoPoints = 15; break;
-      default: ecoPoints = 0;
-    }
-
     pickup.status = 'Completed';
-    pickup.ecoPoints = ecoPoints;
+    pickup.ecoPoints = ecoPoints || pickup.ecoPoints || 0;
     await pickup.save();
 
-    // Add points to user’s total eco points
+    // Add points to user's total eco points
     const user = await User.findById(pickup.user._id);
-    user.ecoPoints = (user.ecoPoints || 0) + ecoPoints;
+    user.ecoPoints = (user.ecoPoints || 0) + pickup.ecoPoints;
     await user.save();
 
     res.json({
       message: 'Pickup marked as completed',
-      ecoPoints,
-      pickup
+      ecoPoints: pickup.ecoPoints,
+      pickup,
+      userEcoPoints: user.ecoPoints,
     });
   } catch (err) {
     res.status(500).json({ message: 'Error updating pickup', error: err.message });
