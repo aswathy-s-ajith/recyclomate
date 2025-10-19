@@ -63,6 +63,35 @@ const styles = {
     color: '#374151',
     fontWeight: '600',
   },
+  modalOverlay: {
+    position: 'fixed',
+    inset: 0,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2000,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    padding: '20px',
+    borderRadius: '8px',
+    width: '90%',
+    maxWidth: '480px',
+    boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+  },
+  modalHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: '12px',
+  },
+  modalCloseButton: {
+    background: 'transparent',
+    border: 'none',
+    fontSize: '1.1rem',
+    cursor: 'pointer',
+  },
   dropdown: {
     position: 'absolute',
     top: '3rem',
@@ -265,6 +294,8 @@ function AdminDashboard() {
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
 
   useEffect(() => {
     const fetchAdminData = async () => {
@@ -392,6 +423,37 @@ function AdminDashboard() {
     }
   };
 
+  // Helper: given a pickup.assignedDriver (which may be username, id, or object), return driver id or ''
+  const getAssignedDriverId = (pickup) => {
+    const a = pickup.assignedDriver;
+    if (!a) return '';
+    // object case
+    if (typeof a === 'object') return a.id || a._id || '';
+    // string case: if matches one of our drivers' ids, return that
+    const byId = drivers.find(d => String(d.id) === String(a) || String(d._id) === String(a));
+    if (byId) return String(byId.id || byId._id);
+    // string case: if matches a driver's name/username, return that driver's id
+    const byName = drivers.find(d => String(d.name) === String(a) || String(d.username) === String(a));
+    if (byName) return String(byName.id || byName._id);
+    // otherwise, if it looks like an ObjectId, return it
+    if (/^[0-9a-fA-F]{24}$/.test(String(a))) return String(a);
+    return '';
+  };
+
+  const getAssignedDriverName = (pickup) => {
+    const a = pickup.assignedDriver;
+    if (!a) return 'N/A';
+    if (typeof a === 'object') return a.username || a.name || String(a.id || a._id);
+    // string: check drivers list first
+    const byId = drivers.find(d => String(d.id) === String(a) || String(d._id) === String(a));
+    if (byId) return byId.name || byId.username || String(byId.id);
+    // check by name
+    const byName = drivers.find(d => String(d.name) === String(a) || String(d.username) === String(a));
+    if (byName) return byName.name || byName.username;
+    // otherwise assume it's already a username string
+    return String(a);
+  };
+
   const renderOverview = () => (
     <>
       <h2 style={styles.pageTitle}>Admin Dashboard Overview</h2>
@@ -467,7 +529,7 @@ function AdminDashboard() {
                 <td style={styles.tableCell}>
                   <button
                     style={styles.button}
-                    onClick={() => alert(`View details for ${user.username}`)}
+                    onClick={() => { setSelectedUser(user); setShowUserModal(true); }}
                     onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
                     onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
                   >
@@ -571,18 +633,18 @@ function AdminDashboard() {
                   {pickup.status === 'Pending' ? (
                     <select
                       style={styles.select}
-                      value={pickup.assignedDriver || ''}
+                      value={getAssignedDriverId(pickup)}
                       onChange={(e) => handleAssignDriver(pickup.id, e.target.value)}
                     >
                       <option value="">Select Driver</option>
                       {drivers.filter(d => d.available).map((driver) => (
-                        <option key={driver.id} value={driver.id}>
+                        <option key={driver.id} value={String(driver.id || driver._id)}>
                           {driver.name}
                         </option>
                       ))}
                     </select>
                   ) : (
-                    pickup.assignedDriver || 'N/A'
+                    getAssignedDriverName(pickup)
                   )}
                 </td>
                 <td style={styles.tableCell}>
@@ -700,6 +762,33 @@ function AdminDashboard() {
         {activeTab === 'drivers' && renderDrivers()}
         {activeTab === 'pickups' && renderPickups()}
       </main>
+      {/* User details modal */}
+      {showUserModal && selectedUser && (
+        <div style={styles.modalOverlay} onClick={() => setShowUserModal(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h3 style={{ margin: 0 }}>{selectedUser.username}</h3>
+              <button style={styles.modalCloseButton} onClick={() => setShowUserModal(false)}>✕</button>
+            </div>
+            <div>
+              <p><strong>ID:</strong> {selectedUser.id}</p>
+              <p><strong>Email:</strong> {selectedUser.email}</p>
+              <p><strong>Eco Points:</strong> {selectedUser.ecoPoints}</p>
+              <p><strong>Pickups:</strong> {selectedUser.pickups}</p>
+            </div>
+            <div style={{ marginTop: '16px', textAlign: 'right' }}>
+              <button
+                style={styles.button}
+                onClick={() => setShowUserModal(false)}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
+              >
+                Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
