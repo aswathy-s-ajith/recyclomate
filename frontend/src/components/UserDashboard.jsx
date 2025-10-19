@@ -25,15 +25,15 @@ const styles = {
   card: { backgroundColor: 'white', borderRadius: '0.75rem', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', marginBottom: '1.5rem' },
   cardTitle: { fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' },
   statValue: { fontSize: '1.875rem', fontWeight: 'bold', color: '#111827' },
-  pickupItem: { display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.75rem' },
+  pickupItem: { display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' },
 };
 
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const [user, setUser] = useState(null);
-  const [nextPickup, setNextPickup] = useState(null);
-  const [ecoPoints, setEcoPoint] = useState(0);
+  const [pickups, setPickups] = useState([]);
+  const [ecoPoints, setEcoPoints] = useState(0);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -50,8 +50,8 @@ const UserDashboard = () => {
         const data = await res.json();
         if (res.ok) {
           setUser(data.user || {});
-          setNextPickup(data.user.assignedPickups?.[0] || null);
-          setEcoPoint(data.user.ecoPoints || 0);
+          setPickups(data.pickups || []);
+          setEcoPoints(data.ecoPoints || 0);
         } else {
           console.error(data.message);
         }
@@ -62,9 +62,10 @@ const UserDashboard = () => {
     fetchData();
   }, [navigate]);
 
-  if (!user) {
-    return <div style={{ textAlign: 'center', marginTop: '20%' }}>Loading...</div>;
-  }
+  if (!user) return <div style={{ textAlign: 'center', marginTop: '20%' }}>Loading...</div>;
+
+  const upcomingPickups = pickups.filter(p => p.status === 'Pending');
+  const completedPickups = pickups.filter(p => p.status === 'Completed');
 
   return (
     <div style={styles.container}>
@@ -85,25 +86,8 @@ const UserDashboard = () => {
               </div>
               {showDropdown && (
                 <div style={styles.dropdown}>
-                  <button
-                    style={styles.dropdownButton}
-                    onClick={() => {
-                      setShowDropdown(false);
-                      navigate('/edit-profile');
-                    }}
-                  >
-                    Edit Profile
-                  </button>
-                  <button
-                    style={styles.dropdownButton}
-                    onClick={() => {
-                      setShowDropdown(false);
-                      localStorage.removeItem('token');
-                      navigate('/login');
-                    }}
-                  >
-                    Logout
-                  </button>
+                  <button style={styles.dropdownButton} onClick={() => { setShowDropdown(false); navigate('/edit-profile'); }}>Edit Profile</button>
+                  <button style={styles.dropdownButton} onClick={() => { setShowDropdown(false); localStorage.removeItem('token'); navigate('/login'); }}>Logout</button>
                 </div>
               )}
             </div>
@@ -114,32 +98,41 @@ const UserDashboard = () => {
       {/* Main Content */}
       <main style={styles.mainContent}>
         <div style={styles.gridContainer}>
+          {/* Welcome Section */}
           <div style={styles.welcomeSection}>
             <h2 style={styles.welcomeTitle}>Welcome back, {user.username || 'User'}!</h2>
             <p style={styles.welcomeSubtext}>Ready to recycle smart today</p>
-            <button
-              style={styles.scheduleButton}
-              onClick={() => navigate('/schedule')}
-            >
-              Schedule Pickup
-            </button>
+            <button style={styles.scheduleButton} onClick={() => navigate('/schedule')}>Schedule Pickup</button>
           </div>
 
-          {/* Next Pickup */}
+          {/* Upcoming Pickups */}
           <div style={styles.card}>
-            <h3 style={styles.cardTitle}>Next Pickup</h3>
-            {nextPickup ? (
-              <div style={styles.pickupItem}>
+            <h3 style={styles.cardTitle}>Upcoming Pickups</h3>
+            {upcomingPickups.length > 0 ? upcomingPickups.map((pickup, index) => (
+              <div key={index} style={styles.pickupItem}>
                 <Calendar />
                 <div>
-                  <p>{nextPickup.type || '-'}</p>
-                  <p>{nextPickup.address || '-'}</p>
-                  <p>{nextPickup.date ? `${nextPickup.date}, ${nextPickup.time || '-'}` : '-'}</p>
+                  <p>Type: {pickup.type || '-'}</p>
+                  <p>Address: {pickup.address || '-'}</p>
+                  <p>Date & Time: {pickup.date ? `${pickup.date}, ${pickup.time || '-'}` : '-'}</p>
                 </div>
               </div>
-            ) : (
-              <p>No pickups scheduled</p>
-            )}
+            )) : <p>No upcoming pickups</p>}
+          </div>
+
+          {/* Completed Pickups */}
+          <div style={styles.card}>
+            <h3 style={styles.cardTitle}>Completed Pickups</h3>
+            {completedPickups.length > 0 ? completedPickups.map((pickup, index) => (
+              <div key={index} style={styles.pickupItem}>
+                <Calendar />
+                <div>
+                  <p>Type: {pickup.type || '-'}</p>
+                  <p>Address: {pickup.address || '-'}</p>
+                  <p>Date & Time: {pickup.date ? `${pickup.date}, ${pickup.time || '-'}` : '-'}</p>
+                </div>
+              </div>
+            )) : <p>No completed pickups yet</p>}
           </div>
 
           {/* Eco Points */}
