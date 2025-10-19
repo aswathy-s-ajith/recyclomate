@@ -133,6 +133,74 @@ router.get("/admin/pickups", verifyToken, authorizeRoles("admin"), async (req, r
   }
 });
 
+// Get single driver details (Admin)
+router.get('/admin/drivers/:driverId', verifyToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { driverId } = req.params;
+    const driver = await Driver.findById(driverId).select('-password');
+    if (!driver) return res.status(404).json({ message: 'Driver not found' });
+
+    const pickups = await Pickup.find();
+    const countAssigned = pickups.filter(p => p.assignedDriver && p.assignedDriver.toString() === driver._id.toString()).length;
+
+    const formatted = {
+      id: driver._id,
+      username: driver.username,
+      email: driver.email,
+      phoneNumber: driver.phoneNumber,
+      serviceArea: driver.serviceArea,
+      vehicleNumber: driver.vehicleNumber,
+      licenseNumber: driver.licenseNumber,
+      vehicleType: driver.vehicleType,
+      assignedPickups: countAssigned,
+      available: countAssigned < 5,
+    };
+
+    res.json({ driver: formatted });
+  } catch (err) {
+    console.error('Get driver error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// Update driver details (Admin)
+router.patch('/admin/drivers/:driverId', verifyToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { driverId } = req.params;
+    const updates = req.body || {};
+
+    const allowed = ['username', 'email', 'phoneNumber', 'serviceArea', 'vehicleNumber', 'licenseNumber', 'vehicleType'];
+    const toSet = {};
+    allowed.forEach(k => {
+      if (typeof updates[k] !== 'undefined') toSet[k] = updates[k];
+    });
+
+    const driver = await Driver.findByIdAndUpdate(driverId, toSet, { new: true }).select('-password');
+    if (!driver) return res.status(404).json({ message: 'Driver not found' });
+
+    const pickups = await Pickup.find();
+    const countAssigned = pickups.filter(p => p.assignedDriver && p.assignedDriver.toString() === driver._id.toString()).length;
+
+    const formatted = {
+      id: driver._id,
+      name: driver.username,
+      email: driver.email,
+      phoneNumber: driver.phoneNumber,
+      serviceArea: driver.serviceArea,
+      vehicleNumber: driver.vehicleNumber,
+      licenseNumber: driver.licenseNumber,
+      vehicleType: driver.vehicleType,
+      assignedPickups: countAssigned,
+      available: countAssigned < 5,
+    };
+
+    res.json({ message: 'Driver updated', driver: formatted });
+  } catch (err) {
+    console.error('Update driver error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Assign driver to pickup
 router.patch("/admin/:pickupId/assign", verifyToken, authorizeRoles("admin"), async (req, res) => {
   try {
@@ -170,6 +238,30 @@ router.patch("/admin/:pickupId/assign", verifyToken, authorizeRoles("admin"), as
     return res.status(500).json({ message: 'Server error' });
   }
 });
+
+// Delete driver (Admin)
+router.delete('/admin/drivers/:driverId', verifyToken, authorizeRoles('admin'), async (req, res) => {
+  try {
+    const { driverId } = req.params;
+    const driver = await Driver.findById(driverId);
+    if (!driver) return res.status(404).json({ message: 'Driver not found' });
+
+    // Delete the driver document
+    await Driver.findByIdAndDelete(driverId);
+
+    // Unassign any pickups that referenced this driver
+    await Pickup.updateMany(
+      { assignedDriver: driverId },
+      { $unset: { assignedDriver: "" } }
+    );
+
+    return res.json({ message: 'Driver deleted' });
+  } catch (err) {
+    console.error('Delete driver error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 
 module.exports = router;

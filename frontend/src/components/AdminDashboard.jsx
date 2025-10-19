@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Recycle, Users, Truck, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 const styles = {
@@ -273,6 +274,7 @@ const styles = {
 };
 
 function AdminDashboard() {
+  const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
   const [activeTab, setActiveTab] = useState('overview');
 
@@ -296,6 +298,9 @@ function AdminDashboard() {
   const [error, setError] = useState('');
   const [showUserModal, setShowUserModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const [showEditDriverModal, setShowEditDriverModal] = useState(false);
+  const [editingDriver, setEditingDriver] = useState(null);
+  const [driverForm, setDriverForm] = useState({});
 
   useEffect(() => {
     const fetchAdminData = async () => {
@@ -347,7 +352,8 @@ function AdminDashboard() {
 
   const handleLogout = () => {
     localStorage.removeItem('token');
-    alert('Logged out successfully!');
+    // redirect to login page
+    navigate('/login');
   };
 
   const handleAssignDriver = async (pickupId, driverId) => {
@@ -452,6 +458,81 @@ function AdminDashboard() {
     if (byName) return byName.name || byName.username;
     // otherwise assume it's already a username string
     return String(a);
+  };
+
+  const saveDriver = async () => {
+    if (!editingDriver) return;
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/users/admin/drivers/${String(editingDriver.id || editingDriver._id)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({
+          username: driverForm.username,
+          email: driverForm.email,
+          phoneNumber: driverForm.phoneNumber,
+          serviceArea: driverForm.serviceArea,
+          vehicleNumber: driverForm.vehicleNumber,
+          licenseNumber: driverForm.licenseNumber,
+          vehicleType: driverForm.vehicleType,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update driver');
+
+      // update local drivers state
+      setDrivers(prev => prev.map(d => (String(d.id || d._id) === String(editingDriver.id || editingDriver._id) ? ({ ...d, ...{
+        name: data.driver.name || data.driver.username || d.name,
+        email: data.driver.email || d.email,
+        phoneNumber: data.driver.phoneNumber || d.phoneNumber,
+        serviceArea: data.driver.serviceArea || d.serviceArea,
+        vehicleNumber: data.driver.vehicleNumber || d.vehicleNumber,
+        licenseNumber: data.driver.licenseNumber || d.licenseNumber,
+        vehicleType: data.driver.vehicleType || d.vehicleType,
+      } }) : d)));
+
+      setShowEditDriverModal(false);
+      setEditingDriver(null);
+    } catch (err) {
+      console.error('Save driver error:', err);
+      alert(err.message || 'Failed to update driver');
+    }
+  };
+
+  const handleRemoveDriver = async (driver) => {
+    if (!driver) return;
+    const confirmMsg = `Delete driver ${driver.name || driver.username || driver.id}? This cannot be undone. Are you sure?`;
+    if (!window.confirm(confirmMsg)) return;
+    try {
+      const id = String(driver.id || driver._id);
+      const token = localStorage.getItem('token');
+      const res = await fetch(`http://localhost:5000/api/users/admin/drivers/${id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+
+      const contentType = res.headers.get('content-type') || '';
+      const data = contentType.includes('application/json') ? await res.json() : await res.text();
+      if (!res.ok) {
+        throw new Error((data && data.message) || data || 'Failed to delete driver');
+      }
+
+      // remove driver from local state
+      setDrivers(prev => prev.filter(d => String(d.id || d._id) !== id));
+      // unassign driver from pickups in local state
+      setPickups(prev => prev.map(p => (getAssignedDriverId(p) === id ? { ...p, assignedDriver: null } : p)));
+
+      alert((data && data.message) || 'Driver deleted');
+    } catch (err) {
+      console.error('Delete driver error:', err);
+      alert(err.message || 'Failed to delete driver');
+    }
   };
 
   const renderOverview = () => (
@@ -575,7 +656,19 @@ function AdminDashboard() {
                 <td style={styles.tableCell}>
                   <button
                     style={styles.button}
-                    onClick={() => alert(`Edit ${driver.name}`)}
+                    onClick={() => {
+                      setEditingDriver(driver);
+                      setDriverForm({
+                        username: driver.name,
+                        email: driver.email,
+                        phoneNumber: driver.phoneNumber || '',
+                        serviceArea: driver.serviceArea || '',
+                        vehicleNumber: driver.vehicleNumber || '',
+                        licenseNumber: driver.licenseNumber || '',
+                        vehicleType: driver.vehicleType || '',
+                      });
+                      setShowEditDriverModal(true);
+                    }}
                     onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
                     onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
                   >
@@ -583,12 +676,13 @@ function AdminDashboard() {
                   </button>
                   <button
                     style={styles.dangerButton}
-                    onClick={() => alert(`Remove ${driver.name}`)}
+                    onClick={() => handleRemoveDriver(driver)} // ✅ call your function here
                     onMouseOver={(e) => e.target.style.backgroundColor = '#b91c1c'}
                     onMouseOut={(e) => e.target.style.backgroundColor = '#dc2626'}
                   >
                     Remove
                   </button>
+
                 </td>
               </tr>
             ))}
@@ -784,6 +878,43 @@ function AdminDashboard() {
                 onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
               >
                 Close
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {/* Edit driver modal */}
+      {showEditDriverModal && editingDriver && (
+        <div style={styles.modalOverlay} onClick={() => setShowEditDriverModal(false)}>
+          <div style={styles.modalContent} onClick={(e) => e.stopPropagation()}>
+            <div style={styles.modalHeader}>
+              <h3 style={{ margin: 0 }}>Edit Driver</h3>
+              <button style={styles.modalCloseButton} onClick={() => setShowEditDriverModal(false)}>✕</button>
+            </div>
+            <div>
+              <label>Username</label>
+              <input style={{ width: '100%', padding: '8px', margin: '6px 0' }} value={driverForm.username || ''} onChange={(e) => setDriverForm({...driverForm, username: e.target.value})} />
+              <label>Email</label>
+              <input style={{ width: '100%', padding: '8px', margin: '6px 0' }} value={driverForm.email || ''} onChange={(e) => setDriverForm({...driverForm, email: e.target.value})} />
+              <label>Phone</label>
+              <input style={{ width: '100%', padding: '8px', margin: '6px 0' }} value={driverForm.phoneNumber || ''} onChange={(e) => setDriverForm({...driverForm, phoneNumber: e.target.value})} />
+              <label>Service Area</label>
+              <input style={{ width: '100%', padding: '8px', margin: '6px 0' }} value={driverForm.serviceArea || ''} onChange={(e) => setDriverForm({...driverForm, serviceArea: e.target.value})} />
+              <label>Vehicle Number</label>
+              <input style={{ width: '100%', padding: '8px', margin: '6px 0' }} value={driverForm.vehicleNumber || ''} onChange={(e) => setDriverForm({...driverForm, vehicleNumber: e.target.value})} />
+              <label>License Number</label>
+              <input style={{ width: '100%', padding: '8px', margin: '6px 0' }} value={driverForm.licenseNumber || ''} onChange={(e) => setDriverForm({...driverForm, licenseNumber: e.target.value})} />
+              <label>Vehicle Type</label>
+              <input style={{ width: '100%', padding: '8px', margin: '6px 0' }} value={driverForm.vehicleType || ''} onChange={(e) => setDriverForm({...driverForm, vehicleType: e.target.value})} />
+            </div>
+            <div style={{ marginTop: '16px', textAlign: 'right' }}>
+              <button
+                style={styles.button}
+                onClick={saveDriver}
+                onMouseOver={(e) => e.target.style.backgroundColor = '#45a049'}
+                onMouseOut={(e) => e.target.style.backgroundColor = '#4CAF50'}
+              >
+                Save
               </button>
             </div>
           </div>
