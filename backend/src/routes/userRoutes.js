@@ -20,38 +20,34 @@ router.get("/user", verifyToken,authorizeRoles("admin","driver","user"), (req, r
     res.json({ message: `Welcome user ${req.user.id}` });
 });
 
+
+const Driver = require("../models/driverModel");
+
 router.get("/me", verifyToken, async (req, res) => {
   try {
-    // Find user by the ID from the decoded token
-    const user = await User.findById(req.user.id).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
+    let account;
+
+    if (req.user.role === "user") {
+      account = await User.findById(req.user.id).select("-password");
+    } else if (req.user.role === "driver") {
+      account = await Driver.findById(req.user.id).select("-password");
+    } else if (req.user.role === "admin") {
+      account = await User.findById(req.user.id).select("-password");
+    } else {
+      return res.status(400).json({ message: "Invalid role" });
     }
 
-    // Dummy data for dashboard (can replace later)
-    const nextPickup = {
-      type: "Plastic Waste",
-      address: user.address || "Not specified",
-      date: "2025-10-20",
-      time: "10:00 AM",
-    };
+    if (!account) {
+      return res.status(404).json({ message: `${req.user.role} not found` });
+    }
 
-    const ecoImpact = {
-      plastic: 40,
-      paper: 30,
-      glass: 20,
-    };
-
-    res.json({
-      user,
-      nextPickup,
-      ecoImpact,
-    });
+    res.json({ user: account });
   } catch (err) {
-    console.error("Error fetching user:", err);
+    console.error("GET /me error:", err);
     res.status(500).json({ message: "Server error" });
   }
 });
+
 
 module.exports = router;
 

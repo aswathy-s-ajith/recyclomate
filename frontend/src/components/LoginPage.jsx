@@ -136,7 +136,7 @@ const Login = () => {
         if (data.user.role === "user") {
           navigate("/dashboard");
         } else if (data.user.role === "driver") {
-          navigate("/driverdashboard");
+          navigate("/driver-dashboard");
         } else if (data.user.role === "admin") {
           navigate("/admindashboard");
         }

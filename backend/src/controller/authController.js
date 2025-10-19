@@ -77,7 +77,7 @@ const registerDriver = async (req, res) => {
         id: newDriver._id,
         username: newDriver.username,
         email: newDriver.email,
-        role: newDriver.role,
+        role: "driver"
       },
     });
   } catch (error) {

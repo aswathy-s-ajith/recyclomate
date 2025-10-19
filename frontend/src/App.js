@@ -6,6 +6,7 @@ import LoginPage from "./components/LoginPage";
 import SignupUser from "./components/SignupUser";
 import SignupDriver from "./components/SignupDriver";
 import UserDashboard from "./components/UserDashboard";
+import DriverDashboard from "./components/DriverDashboard";
 import SchedulePickup from "./components/SchedulePickup";
 function App() {
   return (
@@ -19,7 +20,10 @@ function App() {
         <Route path="/register-user" element={<SignupUser />} />
         <Route path="/register-driver" element={<SignupDriver />} /> 
         <Route path="/dashboard" element={<UserDashboard />} /> 
+        <Route path="/driver-dashboard" element={<DriverDashboard />} /> 
         <Route path="/schedule" element={<SchedulePickup />} /> 
+
+
       </Routes>
     </Router>
 )};
