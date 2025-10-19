@@ -55,5 +55,81 @@ router.get("/me", verifyToken, async (req, res) => {
   }
 });
 
+// Get all users (Admin only)
+// Get all users (Admin only)
+router.get("/admin/users", verifyToken, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const users = await User.find({ role: "user" }).select("-password").sort({ createdAt: -1 });
+    const pickups = await Pickup.find(); // fetch all pickups
+
+    if (!users || users.length === 0) {
+      return res.status(404).json({ message: "No users found" });
+    }
+
+    // Format users to include id and number of pickups
+    const formattedUsers = users.map(user => {
+      const userPickups = pickups.filter(p => p.user.toString() === user._id.toString());
+      return {
+        id: user._id,               // use _id as id
+        username: user.username,
+        email: user.email,
+        ecoPoints: user.ecoPoints || 0,
+        pickups: userPickups.length // number of pickups
+      };
+    });
+
+    res.json({ users: formattedUsers });
+  } catch (err) {
+    console.error("Error fetching users:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+
+// Get all drivers (Admin only)
+// Get all drivers (Admin only)
+router.get("/admin/drivers", verifyToken, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const drivers = await Driver.find().select("-password");
+    const pickups = await Pickup.find(); // fetch all pickups
+
+    const formattedDrivers = drivers.map(driver => {
+      const countAssigned = pickups.filter(p => p.assignedDriverId?.toString() === driver._id.toString()).length;
+      return {
+        id: driver._id,
+        name: driver.username,
+        assignedPickups: countAssigned,
+        available: countAssigned < 5 // example logic: available if assigned < 5 pickups
+      };
+    });
+
+    res.json({ drivers: formattedDrivers });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.get("/admin/pickups", verifyToken, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const pickups = await Pickup.find()
+      .populate("user", "username") // get username from user
+      .populate("assignedDriverId", "username"); // get assigned driver name
+
+    const formattedPickups = pickups.map(p => ({
+      id: p._id,
+      type: p.type,
+      user: p.user?.username || 'N/A',
+      date: p.date,
+      status: p.status,
+      assignedDriver: p.assignedDriverId?.username || null
+    }));
+
+    res.json({ pickups: formattedPickups });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
 
 module.exports = router;

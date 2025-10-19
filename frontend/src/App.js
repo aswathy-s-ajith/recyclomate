@@ -8,6 +8,8 @@ import SignupDriver from "./components/SignupDriver";
 import UserDashboard from "./components/UserDashboard";
 import DriverDashboard from "./components/DriverDashboard";
 import SchedulePickup from "./components/SchedulePickup";
+import AdminDashboard from "./components/AdminDashboard";
+
 function App() {
   return (
     <Router>
@@ -22,7 +24,7 @@ function App() {
         <Route path="/dashboard" element={<UserDashboard />} /> 
         <Route path="/driver-dashboard" element={<DriverDashboard />} /> 
         <Route path="/schedule" element={<SchedulePickup />} /> 
-
+        <Route path="/admin" element={<AdminDashboard/>} /> 
 
       </Routes>
     </Router>
