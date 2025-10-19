@@ -94,7 +94,8 @@ router.get("/admin/drivers", verifyToken, authorizeRoles("admin"), async (req, r
     const pickups = await Pickup.find(); // fetch all pickups
 
     const formattedDrivers = drivers.map(driver => {
-      const countAssigned = pickups.filter(p => p.assignedDriverId?.toString() === driver._id.toString()).length;
+      // pickups list uses `assignedDriver` in the schema
+      const countAssigned = pickups.filter(p => p.assignedDriver && p.assignedDriver.toString() === driver._id.toString()).length;
       return {
         id: driver._id,
         name: driver.username,
@@ -114,15 +115,15 @@ router.get("/admin/pickups", verifyToken, authorizeRoles("admin"), async (req, r
   try {
     const pickups = await Pickup.find()
       .populate("user", "username") // get username from user
-      .populate("assignedDriverId", "username"); // get assigned driver name
+      .populate("assignedDriver", "username"); // populate assigned driver
 
     const formattedPickups = pickups.map(p => ({
       id: p._id,
-      type: p.type,
+      type: Array.isArray(p.type) ? p.type.join(', ') : p.type,
       user: p.user?.username || 'N/A',
       date: p.date,
       status: p.status,
-      assignedDriver: p.assignedDriverId?.username || null
+      assignedDriver: p.assignedDriver?.username || null
     }));
 
     res.json({ pickups: formattedPickups });
@@ -131,5 +132,44 @@ router.get("/admin/pickups", verifyToken, authorizeRoles("admin"), async (req, r
     res.status(500).json({ message: "Server error" });
   }
 });
+
+// Assign driver to pickup
+router.patch("/admin/:pickupId/assign", verifyToken, authorizeRoles("admin"), async (req, res) => {
+  try {
+    const { pickupId } = req.params;
+    const { driverId } = req.body;
+
+    if (!driverId) return res.status(400).json({ message: 'driverId is required in body' });
+
+    const pickup = await Pickup.findById(pickupId);
+    if (!pickup) return res.status(404).json({ message: "Pickup not found" });
+
+    const driver = await Driver.findById(driverId);
+    if (!driver) return res.status(404).json({ message: "Driver not found" });
+
+    pickup.assignedDriver = driverId;
+    await pickup.save();
+
+    // populate and return formatted pickup
+    const updated = await Pickup.findById(pickupId)
+      .populate('user', 'username')
+      .populate('assignedDriver', 'username');
+
+    const formatted = {
+      id: updated._id,
+      type: Array.isArray(updated.type) ? updated.type.join(', ') : updated.type,
+      user: updated.user?.username || 'N/A',
+      date: updated.date,
+      status: updated.status,
+      assignedDriver: updated.assignedDriver?.username || null,
+    };
+
+    return res.json({ message: "Driver assigned successfully", pickup: formatted });
+  } catch (err) {
+    console.error('Assign driver error:', err);
+    return res.status(500).json({ message: 'Server error' });
+  }
+});
+
 
 module.exports = router;

@@ -274,9 +274,10 @@ function AdminDashboard() {
         const token = localStorage.getItem('token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
-        const [usersRes, driversRes] = await Promise.all([
+        const [usersRes, driversRes, pickupsRes] = await Promise.all([
           fetch('http://localhost:5000/api/users/admin/users', { headers }),
           fetch('http://localhost:5000/api/users/admin/drivers', { headers }),
+          fetch('http://localhost:5000/api/users/admin/pickups', { headers }),
         ]);
 
         if (!usersRes.ok) {
@@ -288,11 +289,13 @@ function AdminDashboard() {
           throw new Error(dErr.message || 'Failed to fetch drivers');
         }
 
-        const usersData = await usersRes.json();
-        const driversData = await driversRes.json();
+  const usersData = await usersRes.json();
+  const driversData = await driversRes.json();
+  const pickupsData = await pickupsRes.json();
 
-        setUsers(usersData.users || []);
-        setDrivers(driversData.drivers || []);
+  setUsers(usersData.users || []);
+  setDrivers(driversData.drivers || []);
+  setPickups(pickupsData.pickups || []);
 
         // Update stats from fetched data
         setStats(prev => ({
@@ -316,16 +319,77 @@ function AdminDashboard() {
     alert('Logged out successfully!');
   };
 
-  const handleAssignDriver = (pickupId, driverName) => {
-    setPickups(pickups.map(p => 
-      p.id === pickupId ? { ...p, assignedDriver: driverName } : p
-    ));
+  const handleAssignDriver = async (pickupId, driverId) => {
+    try {
+      // find driver by id
+      const driver = drivers.find(d => d.id === driverId);
+      if (!driver) return alert('Driver not found');
+
+      const token = localStorage.getItem('token');
+      // NOTE: backend route is mounted at /api/users/admin/:pickupId/assign
+      const res = await fetch(`http://localhost:5000/api/users/admin/${pickupId}/assign`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ driverId: driver.id }),
+      });
+
+      const contentType = res.headers.get('content-type') || '';
+      let data;
+      if (contentType.includes('application/json')) {
+        data = await res.json();
+      } else {
+        // fallback: read text and show a friendly error (prevents JSON parse of HTML)
+        const text = await res.text();
+        throw new Error(`Server returned non-JSON response: ${text.slice(0, 200)}`);
+      }
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Assign failed');
+      }
+
+      const updated = data.pickup || data;
+      // prefer driver.id (or _id) as the assigned value so select value matches
+      const assignedValue = driver.id || driver._id;
+      // Update the pickup in local state. Support both `id` and `_id` shapes and compare as strings.
+      setPickups(prev => prev.map(p => {
+        const pId = p.id || p._id;
+        const updatedId = updated.id || updated._id;
+        if (pId && updatedId && String(pId) === String(updatedId)) {
+          return { ...updated, assignedDriver: assignedValue };
+        }
+        return p;
+      }));
+    } catch (err) {
+      console.error('Error assigning driver:', err);
+      alert(err.message || 'Error assigning driver');
+    }
   };
 
   const handleStatusUpdate = (pickupId, newStatus) => {
-    setPickups(pickups.map(p => 
-      p.id === pickupId ? { ...p, status: newStatus } : p
-    ));
+    // Call backend to mark completed
+    if (newStatus === 'Completed') {
+      const token = localStorage.getItem('token');
+      fetch(`http://localhost:5000/api/pickups/${pickupId}/complete`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({}),
+      })
+        .then(async res => {
+          const data = await res.json();
+          if (!res.ok) throw new Error(data.message || 'Complete failed');
+          // update pickup status locally
+          setPickups(prev => prev.map(p => p.id === data.pickup._id ? { ...p, status: 'Completed' } : p));
+        })
+        .catch(err => alert(err.message || 'Error updating status'));
+    } else {
+      setPickups(pickups.map(p => p.id === pickupId ? { ...p, status: newStatus } : p));
+    }
   };
 
   const renderOverview = () => (
@@ -512,7 +576,7 @@ function AdminDashboard() {
                     >
                       <option value="">Select Driver</option>
                       {drivers.filter(d => d.available).map((driver) => (
-                        <option key={driver.id} value={driver.name}>
+                        <option key={driver.id} value={driver.id}>
                           {driver.name}
                         </option>
                       ))}
