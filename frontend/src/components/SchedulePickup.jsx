@@ -170,16 +170,28 @@ function SchedulePickup() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    const token = localStorage.getItem("token"); // ✅ get token
+
+      if (!token) {
+        alert("You must be logged in to schedule a pickup!");
+        return;
+      }
     const pickupData = {
-      wasteTypes: selectedWaste,
-      wasteDetail,
+      type: selectedWaste, // matches backend
+      wasteDetail,         // optional
       address,
-      pickupDate,
-      pickupTime,
+      date: pickupDate,
+      time: pickupTime,
     };
     console.log('Pickup scheduled:', pickupData);
     alert("Pickup Scheduled Successfully!");
     // Add your API call here
+    fetch("http://localhost:5000/api/pickups/schedule", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    body: JSON.stringify(pickupData),
+    });
+
   };
 
   return (

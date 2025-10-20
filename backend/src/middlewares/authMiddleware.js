@@ -13,7 +13,7 @@ const verifyToken = (req, res, next) => {
         if (err) {
             return res.status(403).json({ message: 'Forbidden: Invalid token' });
         }
-        req.user = decoded; // Adds user payload (id, role) to the request object
+        req.user = {id:decoded.id,role: decoded.role}; // Adds user payload (id, role) to the request object
         next();
     });
 };

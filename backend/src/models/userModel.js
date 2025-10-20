@@ -10,7 +10,7 @@ const userSchema = new mongoose.Schema(
     username: {
       type: String,
       required: true,
-      unique: true
+      unique: true,
     },
     password: {
       type: String,
@@ -26,8 +26,20 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["admin", "driver", "user"],
-      default: "user"
-    }
+      default: "user",
+    },
+
+    // ✅ New fields for your app
+    ecoPoints: {
+      type: Number,
+      default: 0, // Tracks total eco points earned by user
+    },
+    assignedPickups: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Pickup", // Links to pickup tasks (for drivers)
+      },
+    ],
   },
   {
     timestamps: true,

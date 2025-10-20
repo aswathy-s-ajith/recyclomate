@@ -77,7 +77,7 @@ const registerDriver = async (req, res) => {
         id: newDriver._id,
         username: newDriver.username,
         email: newDriver.email,
-        role: newDriver.role,
+        role: "driver"
       },
     });
   } catch (error) {
@@ -98,7 +98,11 @@ const login = async (req, res) => {
       account = await User.findOne({ username });
     } else if (role === "driver") {
       account = await Driver.findOne({ username });
-    } else {
+    } 
+    else if(role=="admin"){
+      account=await User.findOne({username , role:"admin"});
+    }
+    else {
       return res.status(400).json({ message: "Invalid role" });
     }
 

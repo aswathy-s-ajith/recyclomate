@@ -4,6 +4,9 @@ require("dotenv").config();
 const dbConnect=require("./config/dbConnect");
 const authRoutes=require("./routes/authRoutes");
 const userRoutes=require("./routes/userRoutes");
+const pickupRoutes = require("./routes/pickupRoutes");
+
+
 dbConnect();
 
 const app=express();
@@ -24,6 +27,7 @@ app.use(cors({
 //routes
 app.use("/api/auth",authRoutes);
 app.use("/api/users",userRoutes);
+app.use("/api/pickups", pickupRoutes);
 //start the server
 app.listen(PORT, () => {
     console.log(`Server is running at port ${PORT}`);
