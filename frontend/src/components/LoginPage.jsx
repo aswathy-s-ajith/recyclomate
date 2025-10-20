@@ -138,7 +138,8 @@ const Login = () => {
         } else if (data.user.role === "driver") {
           navigate("/driver-dashboard");
         } else if (data.user.role === "admin") {
-          navigate("/admindashboard");
+          // Redirect admin to /admin (route name used by the app)
+          navigate("/admin");
         }
       }, 800);
     } catch (err) {
