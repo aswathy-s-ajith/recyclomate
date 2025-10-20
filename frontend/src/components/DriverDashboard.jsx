@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from "react";
+import { Bell } from 'lucide-react';
+import NotificationsModal from './NotificationsModal';
 
 function DriverDashboard() {
+  const [showNotifications, setShowNotifications] = useState(false);
   const [agentInfo, setAgentInfo] = useState(null);
   const [assignedPickups, setAssignedPickups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -120,7 +123,25 @@ function DriverDashboard() {
 
   return (
     <div style={{ maxWidth: "900px", margin: "20px auto", fontFamily: "Arial, sans-serif", backgroundColor: "#f4f4f4", padding: "20px", borderRadius: "8px" }}>
-      <h1 style={{ textAlign: "center", marginBottom: "30px", color: "#4CAF50" }}>Driver Dashboard</h1>
+      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "30px" }}>
+        <h1 style={{ color: "#4CAF50", margin: 0 }}>Driver Dashboard</h1>
+        <div 
+          onClick={() => setShowNotifications(true)}
+          style={{ 
+            marginLeft: "20px",
+            cursor: "pointer",
+            padding: "8px",
+            borderRadius: "50%",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            transition: "background-color 0.2s"
+          }}
+        >
+          <Bell size={24} color="#374151" />
+        </div>
+      </div>
+      <NotificationsModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
 
       {/* Driver Info */}
       <div style={{ ...cardStyle, display: "flex", alignItems: "center" }}>

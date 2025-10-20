@@ -25,47 +25,47 @@ const styles = {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: '20px 80px',
+    padding: '10px 80px', // slightly reduced for tighter fit
     backgroundColor: '#ffffff',
     boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
     borderRadius: '10px',
     margin: '20px 40px 0 40px',
+    height: '70px', // fixed height
   },
   logoContainer: {
     display: 'flex',
     alignItems: 'center',
   },
   logo: {
-    height: '30px',
-    marginRight: '10px',
-  },
-  brandName: {
-    fontSize: '24px',
-    fontWeight: 'bold',
-    color: '#333',
+    height: '50px', // slightly bigger logo
+    width: 'auto',
+    objectFit: 'contain',
   },
   navLinks: {
     display: 'flex',
-    gap: '30px',
+    alignItems: 'center', // centers all items vertically
+    gap: '25px',
   },
   loginButton: {
     backgroundColor: '#4CAF50',
     color: 'white',
-    padding: '10px 18px',
+    padding: '8px 18px',
     border: 'none',
     borderRadius: '8px',
     fontSize: '16px',
     cursor: 'pointer',
     textDecoration: 'none',
-    display: 'inline-flex',
-    alignItems: 'center',
-    justifyContent: 'center',
+    display: 'inline-block',
+    lineHeight: '1',
+    verticalAlign: 'middle',
+    position: 'relative',
+    top: '0', // no offset needed
   },
   navLink: {
-    textDecoration: 'none',
     color: '#555',
     fontSize: '16px',
-    transition: 'color 0.3s ease',
+    cursor: 'default',
+    fontWeight: '500',
   },
   heroContent: {
     display: 'flex',
@@ -214,8 +214,8 @@ const styles = {
 
   // Testimonials Section specific styles
   testimonialsSection: {
-    position: 'relative', // For absolute positioning of brand name and sparkle
-    overflow: 'hidden', // To contain the sparkles
+    position: 'relative',
+    overflow: 'hidden',
   },
   reviewCard: {
     background: '#ffffff',
@@ -281,13 +281,12 @@ const LandingPage = () => {
         <header style={styles.navbar}>
           <div style={styles.logoContainer}>
             <img src={logo} alt="RecycloMate Logo" style={styles.logo} />
-            <span style={styles.brandName}>RecycloMate</span>
           </div>
           <nav style={styles.navLinks}>
-            <a href="#home" style={styles.navLink}>Home</a>
-            <a href="#about" style={styles.navLink}>About</a>
-            <a href="#contact" style={styles.navLink}>Contact</a>
-            <Link to="/login" style={styles.loginButton}>Login</Link>
+            <span style={styles.navLink}>Home</span>
+            <span style={styles.navLink}>About</span>
+            <span style={styles.navLink}>Contact</span>
+            <Link to="/register" style={styles.loginButton}>Login/Signup</Link>
           </nav>
         </header>
 
@@ -299,7 +298,7 @@ const LandingPage = () => {
             <p style={styles.heroSubtitle}>
               Innovative solutions for a <br /> sustainable future
             </p>
-            <button style={styles.getStartedButton}>Get Started</button>
+            <button style={styles.getStartedButton}>Know More</button>
             <div style={styles.features}>
               <div style={styles.featureItem}>
                 <span style={styles.icon}>✔️</span>

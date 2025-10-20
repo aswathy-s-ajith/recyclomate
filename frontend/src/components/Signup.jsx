@@ -57,38 +57,25 @@ const styles = {
     cursor: 'pointer',
     transition: 'background-color 0.3s ease',
   },
-  errorMessage: {
-    color: 'red',
-    marginBottom: '10px',
-    textAlign: 'center',
-  },
-  successMessage: {
-    color: 'green',
-    marginBottom: '10px',
-    textAlign: 'center',
-  },
-  loginRow: {
-    marginTop: '14px',
-    textAlign: 'center',
-    fontSize: '14px',
-    color: '#555',
-  },
-  loginLink: {
-    marginLeft: '6px',
-    color: '#4CAF50',
-    textDecoration: 'none',
-    fontWeight: '600',
-  },
+  errorMessage: { color: 'red', marginBottom: '10px', textAlign: 'center' },
+  successMessage: { color: 'green', marginBottom: '10px', textAlign: 'center' },
+  loginRow: { marginTop: '14px', textAlign: 'center', fontSize: '14px', color: '#555' },
+  loginLink: { marginLeft: '6px', color: '#4CAF50', textDecoration: 'none', fontWeight: '600' },
+  roleSelect: { width: '100%', padding: '15px', fontSize: '1em', borderRadius: '8px', marginBottom: '20px' },
 };
 
-const SignupUser = () => {
+const Signup = () => {
+  const [role, setRole] = useState('user'); // user or agent
   const [formData, setFormData] = useState({
     email: '',
     username: '',
     password: '',
     phoneNumber: '',
     address: '',
-    role: 'User', // 👈 fixed role
+    vehicleNumber: '',
+    licenseNumber: '',
+    vehicleType: '',
+    serviceArea: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -104,6 +91,14 @@ const SignupUser = () => {
     if (!formData.email.trim()) return 'Email is required';
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email)) return 'Invalid email';
     if (formData.password.length < 6) return 'Password must be at least 6 characters';
+
+    if (role === 'agent') {
+      if (!formData.vehicleNumber.trim()) return 'Vehicle number is required';
+      if (!formData.licenseNumber.trim()) return 'License number is required';
+      if (!formData.vehicleType.trim()) return 'Vehicle type is required';
+      if (!formData.serviceArea.trim()) return 'Service area is required';
+    }
+
     return null;
   };
 
@@ -113,32 +108,30 @@ const SignupUser = () => {
     setSuccess('');
 
     const validationError = validate();
-    if (validationError) {
-      setError(validationError);
-      return;
-    }
+    if (validationError) return setError(validationError);
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/auth/register-user', {
+      const res = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({ ...formData, role: role === 'user' ? 'User' : 'Driver' }),
       });
-
-      
 
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Signup failed');
 
-      setSuccess('✅ Account created successfully! You can now log in.');
+      setSuccess(`✅ ${role === 'user' ? 'User' : 'Driver'} account created successfully!`);
       setFormData({
         email: '',
         username: '',
         password: '',
         phoneNumber: '',
         address: '',
-        role: 'User',
+        vehicleNumber: '',
+        licenseNumber: '',
+        vehicleType: '',
+        serviceArea: '',
       });
     } catch (err) {
       setError(err.message || 'Something went wrong');
@@ -154,86 +147,56 @@ const SignupUser = () => {
         <span style={styles.logoText}>RecycloMate</span>
       </div>
 
-      <h2 style={styles.signupTitle}>Sign Up as User</h2>
+      <h2 style={styles.signupTitle}>Sign Up</h2>
 
       <form onSubmit={handleSubmit} style={styles.signupForm}>
         {error && <div style={styles.errorMessage}>{error}</div>}
         {success && <div style={styles.successMessage}>{success}</div>}
 
+        {/* Role Selection */}
+        <select value={role} onChange={(e) => setRole(e.target.value)} style={styles.roleSelect}>
+          <option value="user">User</option>
+          <option value="agent">Agent</option>
+        </select>
+
+        {/* Common Fields */}
         <div style={styles.inputGroup}>
-          <input
-            type="email"
-            name="email"
-            placeholder="Email"
-            value={formData.email}
-            onChange={handleChange}
-            required
-            style={styles.signupInput}
-          />
+          <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required style={styles.signupInput} />
+        </div>
+        <div style={styles.inputGroup}>
+          <input type="text" name="username" placeholder="Username" value={formData.username} onChange={handleChange} required style={styles.signupInput} />
+        </div>
+        <div style={styles.inputGroup}>
+          <input type="password" name="password" placeholder="Password" value={formData.password} onChange={handleChange} required style={styles.signupInput} />
+        </div>
+        <div style={styles.inputGroup}>
+          <input type="tel" name="phoneNumber" placeholder="Phone Number" value={formData.phoneNumber} onChange={handleChange} style={styles.signupInput} />
         </div>
 
-        <div style={styles.inputGroup}>
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={formData.username}
-            onChange={handleChange}
-            required
-            style={styles.signupInput}
-          />
-        </div>
+        {/* User-only Fields */}
+        {role === 'user' && (
+          <div style={styles.inputGroup}>
+            <input type="text" name="address" placeholder="Address" value={formData.address} onChange={handleChange} style={styles.signupInput} />
+          </div>
+        )}
 
-        <div style={styles.inputGroup}>
-          <input
-            type="password"
-            name="password"
-            placeholder="Password"
-            value={formData.password}
-            onChange={handleChange}
-            required
-            style={styles.signupInput}
-          />
-        </div>
-
-        <div style={styles.inputGroup}>
-          <input
-            type="tel"
-            name="phoneNumber"
-            placeholder="Phone Number"
-            value={formData.phoneNumber}
-            onChange={handleChange}
-            style={styles.signupInput}
-          />
-        </div>
-
-        <div style={styles.inputGroup}>
-          <input
-            type="text"
-            name="address"
-            placeholder="Address"
-            value={formData.address}
-            onChange={handleChange}
-            style={styles.signupInput}
-          />
-        </div>
-
-        <div style={styles.inputGroup}>
-            <label style={{ marginBottom: '5px', color: '#555', fontWeight: '500' }}>Role</label>
-            <input
-                type="text"
-                name="role"
-                value="User"
-                readOnly // 👈 prevents editing
-                style={{
-                ...styles.signupInput,
-                backgroundColor: '#e9ecef', // light gray to indicate read-only
-                cursor: 'not-allowed'
-                }}
-            />
-        </div>
-
-        
+        {/* Agent-only Fields */}
+        {role === 'agent' && (
+          <>
+            <div style={styles.inputGroup}>
+              <input type="text" name="serviceArea" placeholder="Service Area" value={formData.serviceArea} onChange={handleChange} style={styles.signupInput} />
+            </div>
+            <div style={styles.inputGroup}>
+              <input type="text" name="vehicleNumber" placeholder="Vehicle Number" value={formData.vehicleNumber} onChange={handleChange} style={styles.signupInput} />
+            </div>
+            <div style={styles.inputGroup}>
+              <input type="text" name="licenseNumber" placeholder="License Number" value={formData.licenseNumber} onChange={handleChange} style={styles.signupInput} />
+            </div>
+            <div style={styles.inputGroup}>
+              <input type="text" name="vehicleType" placeholder="Vehicle Type (e.g., Truck, Van, Bike)" value={formData.vehicleType} onChange={handleChange} style={styles.signupInput} />
+            </div>
+          </>
+        )}
 
         <button type="submit" style={styles.signupButton} disabled={loading}>
           {loading ? 'Creating Account...' : 'Sign Up'}
@@ -248,4 +211,4 @@ const SignupUser = () => {
   );
 };
 
-export default SignupUser;
+export default Signup;
