@@ -207,7 +207,7 @@ const Login = () => {
 
         <div style={styles.signupRow}>
           <span>Don’t have an account?</span>
-          <Link to="/register-user" style={styles.signupLink}>
+          <Link to="/register" style={styles.signupLink}>
             Sign up.
           </Link>
         </div>

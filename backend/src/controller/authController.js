@@ -1,88 +1,85 @@
 
-const bcrypt=require("bcryptjs");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const User=require("../models/userModel");
+const User = require("../models/userModel");
 const Driver = require("../models/driverModel");
 
-// register user
-const registerUser = async (req, res) => {
+const register = async (req, res) => {
   try {
-    const { username, email, password, phoneNumber, address } = req.body;
-
-    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
-    if (existingUser)
-      return res.status(400).json({ message: "Username or email already exists" });
-
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const newUser = new User({
-      username,
-      email,
-      password: hashedPassword,
-      phoneNumber,
+    const { 
+      username, 
+      email, 
+      password, 
+      phoneNumber, 
+      role,
+      // User specific fields
       address,
-      role: "user",
-    });
-
-    await newUser.save();
-    res.status(201).json({ message: `User registered with username ${username}` });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "Something went wrong during user registration" });
-  }
-};
-
-
-
-
-const registerDriver = async (req, res) => {
-  try {
-    const {
-      username,
-      email,
-      password,
-      phoneNumber,
+      // Driver specific fields
       serviceArea,
       vehicleNumber,
       licenseNumber,
-      vehicleType,
+      vehicleType
     } = req.body;
 
-    // Check if driver already exists
-    const existingDriver = await Driver.findOne({ username });
-    if (existingDriver) {
-      return res.status(400).json({ message: "Driver already exists" });
+    // Check if user/driver already exists
+    const existingUser = await User.findOne({ $or: [{ username }, { email }] });
+    const existingDriver = await Driver.findOne({ $or: [{ username }, { email }] });
+    
+    if (existingUser || existingDriver) {
+      return res.status(400).json({ message: "Username or email already exists" });
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create driver
-    const newDriver = new Driver({
-      username,
-      email,
-      password: hashedPassword,
-      phoneNumber,
-      serviceArea,
-      vehicleNumber,
-      licenseNumber,
-      vehicleType,
-    });
+    if (role.toLowerCase() === 'user') {
+      const newUser = new User({
+        username,
+        email,
+        password: hashedPassword,
+        phoneNumber,
+        addresses: address ? [address] : [],
+        role: "user",
+      });
 
-    await newDriver.save();
-
-    res.status(201).json({
-      message: "Driver registered successfully",
-      driver: {
-        id: newDriver._id,
-        username: newDriver.username,
-        email: newDriver.email,
+      await newUser.save();
+      res.status(201).json({ 
+        message: `User registered with username ${username}`,
+        user: {
+          id: newUser._id,
+          username: newUser.username,
+          email: newUser.email,
+          role: "user"
+        }
+      });
+    } else if (role.toLowerCase() === 'driver') {
+      const newDriver = new Driver({
+        username,
+        email,
+        password: hashedPassword,
+        phoneNumber,
+        serviceArea,
+        vehicleNumber,
+        licenseNumber,
+        vehicleType,
         role: "driver"
-      },
-    });
-  } catch (error) {
-    console.error("Error registering driver:", error);
-    res.status(500).json({ message: "Something went wrong", error: error.message });
+      });
+
+      await newDriver.save();
+      res.status(201).json({
+        message: "Driver registered successfully",
+        driver: {
+          id: newDriver._id,
+          username: newDriver.username,
+          email: newDriver.email,
+          role: "driver"
+        }
+      });
+    } else {
+      return res.status(400).json({ message: "Invalid role specified" });
+    }
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong during registration" });
   }
 };
 
@@ -142,6 +139,5 @@ const login = async (req, res) => {
 
 module.exports = {
     login,
-    registerUser,
-    registerDriver
+    register
 };

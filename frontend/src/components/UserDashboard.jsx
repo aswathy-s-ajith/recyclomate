@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { Calendar, Recycle } from 'lucide-react';
+import { Calendar, Recycle, Bell } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import NotificationsModal from './NotificationsModal';
+import ActivityMetricsChart from './ActivityMetricsChart';
 
 const styles = {
   container: { minHeight: '100vh', backgroundColor: '#f9fafb' },
@@ -11,6 +13,16 @@ const styles = {
   logoText: { fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' },
   userSection: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
   userName: { color: '#374151' },
+  notificationIcon: { 
+    cursor: 'pointer', 
+    padding: '0.5rem',
+    borderRadius: '50%',
+    transition: 'background-color 0.2s',
+    position: 'relative',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
   userAvatarContainer: { position: 'relative' },
   userAvatar: { width: '2.5rem', height: '2.5rem', backgroundColor: '#d1d5db', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
   avatarText: { color: '#374151', fontWeight: '600' },
@@ -31,6 +43,7 @@ const styles = {
 const UserDashboard = () => {
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
   const [user, setUser] = useState(null);
   const [pickups, setPickups] = useState([]);
   const [ecoPoints, setEcoPoints] = useState(0);
@@ -65,7 +78,7 @@ const UserDashboard = () => {
   if (!user) return <div style={{ textAlign: 'center', marginTop: '20%' }}>Loading...</div>;
 
   const upcomingPickups = pickups.filter(p => p.status === 'Pending');
-  const completedPickups = pickups.filter(p => p.status === 'Completed');
+
 
   return (
     <div style={styles.container}>
@@ -79,7 +92,10 @@ const UserDashboard = () => {
             <h1 style={styles.logoText}>RecycloMate</h1>
           </div>
           <div style={styles.userSection}>
-            <span style={styles.userName}>Hi, {user.username || 'User'}</span>
+            <div style={styles.notificationIcon} onClick={() => setShowNotifications(true)}>
+              <Bell size={20} color="#374151" />
+            </div>
+            <NotificationsModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
             <div style={styles.userAvatarContainer}>
               <div style={styles.userAvatar} onClick={() => setShowDropdown(!showDropdown)}>
                 <span style={styles.avatarText}>{user.username?.[0]?.toUpperCase() || 'U'}</span>
@@ -120,26 +136,14 @@ const UserDashboard = () => {
             )) : <p>No upcoming pickups</p>}
           </div>
 
-          {/* Completed Pickups */}
-          <div style={styles.card}>
-            <h3 style={styles.cardTitle}>Completed Pickups</h3>
-            {completedPickups.length > 0 ? completedPickups.map((pickup, index) => (
-              <div key={index} style={styles.pickupItem}>
-                <Calendar />
-                <div>
-                  <p>Type: {pickup.type || '-'}</p>
-                  <p>Address: {pickup.address || '-'}</p>
-                  <p>Date & Time: {pickup.date ? `${pickup.date}, ${pickup.time || '-'}` : '-'}</p>
-                </div>
-              </div>
-            )) : <p>No completed pickups yet</p>}
-          </div>
-
           {/* Eco Points */}
           <div style={styles.card}>
             <h3 style={styles.cardTitle}>Eco Points</h3>
             <p style={styles.statValue}>{ecoPoints}</p>
           </div>
+
+          {/* Activity Metrics Graph */}
+          <ActivityMetricsChart pickups={pickups} />
         </div>
       </main>
     </div>
