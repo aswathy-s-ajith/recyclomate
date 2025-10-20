@@ -310,10 +310,11 @@ function AdminDashboard() {
         const token = localStorage.getItem('token');
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
+        const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
         const [usersRes, driversRes, pickupsRes] = await Promise.all([
-          fetch('http://localhost:5000/api/users/admin/users', { headers }),
-          fetch('http://localhost:5000/api/users/admin/drivers', { headers }),
-          fetch('http://localhost:5000/api/users/admin/pickups', { headers }),
+          fetch(`${API_BASE_URL}/api/users/admin/users`, { headers }),
+          fetch(`${API_BASE_URL}/api/users/admin/drivers`, { headers }),
+          fetch(`${API_BASE_URL}/api/users/admin/pickups`, { headers }),
         ]);
 
         if (!usersRes.ok) {
