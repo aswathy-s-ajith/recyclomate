@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Recycle } from 'lucide-react';
 
 const styles = {
@@ -140,12 +140,8 @@ const styles = {
 };
 
 function SchedulePickup() {
-  // Example saved addresses
-  const savedAddresses = [
-    "123 Main St, City A",
-    "456 Park Ave, City B",
-    "789 Oak Rd, City C",
-  ];
+  // Addresses fetched from backend
+  const [addresses, setAddresses] = useState([]);
 
   // Example dates and time slots
   const availableDates = ["2025-10-19", "2025-10-20", "2025-10-21"];
@@ -156,7 +152,27 @@ function SchedulePickup() {
 
   const [selectedWaste, setSelectedWaste] = useState([]);
   const [wasteDetail, setWasteDetail] = useState("");
-  const [address, setAddress] = useState(savedAddresses[0]);
+  const [address, setAddress] = useState("");
+  // Fetch user addresses on mount
+  useEffect(() => {
+    const fetchAddresses = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const res = await fetch("http://localhost:5000/api/users/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (res.ok && data.user && Array.isArray(data.user.addresses)) {
+          setAddresses(data.user.addresses);
+          setAddress(data.user.addresses[0] || "");
+        }
+      } catch (err) {
+        console.error("Error fetching addresses:", err);
+      }
+    };
+    fetchAddresses();
+  }, []);
   const [pickupDate, setPickupDate] = useState(availableDates[0]);
   const [pickupTime, setPickupTime] = useState(timeSlots[0]);
 
@@ -250,12 +266,17 @@ function SchedulePickup() {
               value={address}
               onChange={(e) => setAddress(e.target.value)}
               style={styles.select}
+              disabled={addresses.length === 0}
             >
-              {savedAddresses.map((addr, idx) => (
-                <option key={idx} value={addr}>
-                  {addr}
-                </option>
-              ))}
+              {addresses.length === 0 ? (
+                <option value="">No addresses found. Please add an address in your profile.</option>
+              ) : (
+                addresses.map((addr, idx) => (
+                  <option key={idx} value={addr}>
+                    {addr}
+                  </option>
+                ))
+              )}
             </select>
           </div>
 

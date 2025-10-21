@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Recycle, Users, Truck, Calendar, CheckCircle, Clock, AlertCircle } from 'lucide-react';
+import AdminMetricsCharts from './AdminMetricsCharts';
 
 const styles = {
   container: {
@@ -582,6 +583,8 @@ function AdminDashboard() {
           </div>
         </div>
       </div>
+      {/* Metrics Charts with Toggle */}
+      <AdminMetricsCharts pickups={pickups} />
     </>
   );
 

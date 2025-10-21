@@ -19,9 +19,9 @@ const userSchema = new mongoose.Schema(
     phoneNumber: {
       type: String,
     },
-    address: {
+    addresses: [{
       type: String,
-    },
+    }],
     role: {
       type: String,
       required: true,
