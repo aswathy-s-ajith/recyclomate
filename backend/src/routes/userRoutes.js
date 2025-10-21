@@ -42,6 +42,7 @@ router.get("/me", verifyToken, async (req, res) => {
     // For driver/admin you can keep your existing logic
     if (req.user.role === "driver") {
       account = await Driver.findById(req.user.id).select("-password");
+      return res.json({ driver: account });
     } else if (req.user.role === "admin") {
       account = await User.findById(req.user.id).select("-password");
     } else {
@@ -52,6 +53,30 @@ router.get("/me", verifyToken, async (req, res) => {
   } catch (err) {
     console.error("GET /me error:", err);
     res.status(500).json({ message: "Server error" });
+  }
+});
+
+// Update current user profile
+router.patch('/me', verifyToken, async (req, res) => {
+  try {
+    const { id, role } = req.user;
+    if (role !== 'user' && role !== 'admin') {
+      return res.status(403).json({ message: 'Only users/admins can update profile via this endpoint' });
+    }
+
+    const updates = {};
+    const allowed = ['username', 'email', 'phoneNumber', 'addresses', 'profilePic'];
+    allowed.forEach(k => {
+      if (typeof req.body[k] !== 'undefined') updates[k] = req.body[k];
+    });
+
+    const user = await User.findByIdAndUpdate(id, updates, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    res.json({ message: 'Profile updated', user });
+  } catch (err) {
+    console.error('Update profile error:', err);
+    res.status(500).json({ message: 'Server error' });
   }
 });
 
@@ -265,3 +290,39 @@ router.delete('/admin/drivers/:driverId', verifyToken, authorizeRoles('admin'), 
 
 
 module.exports = router;
+
+// DRIVER SELF PROFILE ENDPOINTS
+router.get("/drivers/me", verifyToken, authorizeRoles("driver"), async (req, res) => {
+  try {
+    const driver = await Driver.findById(req.user.id).select("-password");
+    if (!driver) return res.status(404).json({ message: "Driver not found" });
+    res.json({ driver });
+  } catch (err) {
+    console.error("GET /drivers/me error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.patch("/drivers/me", verifyToken, authorizeRoles("driver"), async (req, res) => {
+  try {
+    const { id } = req.user;
+    const updates = {};
+    const allowed = [
+      "username", "email", "phoneNumber", "serviceArea", "vehicleNumber", "licenseNumber", "vehicleType", "profilePic", "password"
+    ];
+    allowed.forEach(k => {
+      if (typeof req.body[k] !== "undefined") updates[k] = req.body[k];
+    });
+    if (updates.password) {
+      // hash password if present
+      const bcrypt = require("bcryptjs");
+      updates.password = await bcrypt.hash(updates.password, 10);
+    }
+    const driver = await Driver.findByIdAndUpdate(id, updates, { new: true }).select("-password");
+    if (!driver) return res.status(404).json({ message: "Driver not found" });
+    res.json({ message: "Profile updated", driver });
+  } catch (err) {
+    console.error("PATCH /drivers/me error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});

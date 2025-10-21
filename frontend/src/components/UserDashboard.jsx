@@ -1,153 +1,134 @@
-import React, { useEffect, useState } from 'react';
-import { Calendar, Recycle, Bell } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
-import NotificationsModal from './NotificationsModal';
-import ActivityMetricsChart from './ActivityMetricsChart';
+import React, { useEffect, useState } from "react";
+import ActivityMetricsChart from "./ActivityMetricsChart";
 
-const styles = {
-  container: { minHeight: '100vh', backgroundColor: '#f9fafb' },
-  header: { backgroundColor: '#ffffff', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' },
-  headerContent: { maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
-  logoContainer: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
-  logoIcon: { backgroundColor: '#22c55e', width: '2.5rem', height: '2.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' },
-  userSection: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
-  userName: { color: '#374151' },
-  notificationIcon: { 
-    cursor: 'pointer', 
-    padding: '0.5rem',
-    borderRadius: '50%',
-    transition: 'background-color 0.2s',
-    position: 'relative',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  userAvatarContainer: { position: 'relative' },
-  userAvatar: { width: '2.5rem', height: '2.5rem', backgroundColor: '#d1d5db', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
-  avatarText: { color: '#374151', fontWeight: '600' },
-  dropdown: { position: 'absolute', top: '3rem', right: '0', backgroundColor: 'white', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', padding: '0.5rem', minWidth: '150px', zIndex: 1000 },
-  dropdownButton: { width: '100%', padding: '0.75rem 1rem', textAlign: 'left', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '0.875rem', color: '#374151', borderRadius: '0.25rem', transition: 'background-color 0.2s' },
-  mainContent: { maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' },
-  gridContainer: { display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' },
-  welcomeSection: { marginBottom: '1.5rem' },
-  welcomeTitle: { fontSize: '2.25rem', fontWeight: 'bold', color: '#111827', marginBottom: '0.5rem', lineHeight: '1.2' },
-  welcomeSubtext: { color: '#6b7280', marginBottom: '1.5rem' },
-  scheduleButton: { backgroundColor: '#22c55e', color: 'white', padding: '0.75rem 1.5rem', borderRadius: '0.5rem', fontWeight: '500', border: 'none', cursor: 'pointer', transition: 'background-color 0.2s' },
-  card: { backgroundColor: 'white', borderRadius: '0.75rem', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', marginBottom: '1.5rem' },
-  cardTitle: { fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' },
-  statValue: { fontSize: '1.875rem', fontWeight: 'bold', color: '#111827' },
-  pickupItem: { display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' },
-};
-
-const UserDashboard = () => {
-  const navigate = useNavigate();
-  const [showDropdown, setShowDropdown] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+function UserDashboard() {
   const [user, setUser] = useState(null);
   const [pickups, setPickups] = useState([]);
   const [ecoPoints, setEcoPoints] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const token = localStorage.getItem('token');
+    const fetchDashboardData = async () => {
+      const token = localStorage.getItem("token");
       if (!token) {
-        navigate('/login');
+        setLoading(false);
         return;
       }
 
       try {
-        const res = await fetch('http://localhost:5000/api/users/me', {
+        // Fetch user profile
+        const resProfile = await fetch("http://localhost:5000/api/users/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const data = await res.json();
-        if (res.ok) {
-          setUser(data.user || {});
-          setPickups(data.pickups || []);
-          setEcoPoints(data.ecoPoints || 0);
-        } else {
-          console.error(data.message);
-        }
+        const dataProfile = await resProfile.json();
+        if (resProfile.ok) setUser(dataProfile.user || dataProfile);
+
+        // Fetch pickups
+        const resPickups = await fetch(
+          "http://localhost:5000/api/pickups/user-pickups",
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        const dataPickups = await resPickups.json();
+        if (resPickups.ok) setPickups(dataPickups);
+
+        // Fetch eco-points
+        const resPoints = await fetch("http://localhost:5000/api/users/ecopoints", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const dataPoints = await resPoints.json();
+        if (resPoints.ok) setEcoPoints(dataPoints.ecoPoints);
+
       } catch (error) {
-        console.error('Error fetching user data:', error);
+        console.error("Error fetching user dashboard data:", error);
+      } finally {
+        setLoading(false);
       }
     };
-    fetchData();
-  }, [navigate]);
 
-  if (!user) return <div style={{ textAlign: 'center', marginTop: '20%' }}>Loading...</div>;
+    fetchDashboardData();
+  }, []);
 
-  const upcomingPickups = pickups.filter(p => p.status === 'Pending');
+  if (loading)
+    return <div style={styles.loading}>Loading your dashboard...</div>;
 
+  if (!user)
+    return <div style={styles.error}>No user data found.</div>;
 
   return (
     <div style={styles.container}>
-      {/* Header */}
-      <header style={styles.header}>
-        <div style={styles.headerContent}>
-          <div style={styles.logoContainer}>
-            <div style={styles.logoIcon}>
-              <Recycle style={{ width: '1.5rem', height: '1.5rem', color: 'white' }} />
-            </div>
-            <h1 style={styles.logoText}>RecycloMate</h1>
+      <h2 style={styles.title}>Welcome back, {user.username || "User"}!</h2>
+      <p style={styles.subtitle}>Here’s your recycling journey so far 🌱</p>
+
+      {/* Summary Cards */}
+      <div style={styles.cardsContainer}>
+        <div style={styles.card}>
+          <h3 style={styles.cardTitle}>Total Pickups</h3>
+          <p style={styles.statValue}>{pickups.length}</p>
+        </div>
+
+        <div style={styles.card}>
+          <h3 style={styles.cardTitle}>Completed Pickups</h3>
+          <p style={styles.statValue}>
+            {pickups.filter((p) => p.status === "Completed").length}
+          </p>
+        </div>
+
+        <div style={styles.card}>
+          <h3 style={styles.cardTitle}>Eco Points</h3>
+          <p style={styles.statValue}>{ecoPoints}</p>
+        </div>
+      </div>
+
+      {/* Your Impact Section */}
+      <div style={styles.card}>
+        <h3 style={styles.cardTitle}>Your Impact</h3>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "1.5rem" }}>
+          <div style={{ flex: "1 1 200px" }}>
+            <p style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#22c55e" }}>
+              {pickups.filter(p => p.status === "Completed").length}
+            </p>
+            <p style={{ color: "#6b7280" }}>Pickups Completed</p>
           </div>
-          <div style={styles.userSection}>
-            <div style={styles.notificationIcon} onClick={() => setShowNotifications(true)}>
-              <Bell size={20} color="#374151" />
-            </div>
-            <NotificationsModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
-            <div style={styles.userAvatarContainer}>
-              <div style={styles.userAvatar} onClick={() => setShowDropdown(!showDropdown)}>
-                <span style={styles.avatarText}>{user.username?.[0]?.toUpperCase() || 'U'}</span>
-              </div>
-              {showDropdown && (
-                <div style={styles.dropdown}>
-                  <button style={styles.dropdownButton} onClick={() => { setShowDropdown(false); navigate('/edit-profile'); }}>Edit Profile</button>
-                  <button style={styles.dropdownButton} onClick={() => { setShowDropdown(false); localStorage.removeItem('token'); navigate('/login'); }}>Logout</button>
-                </div>
-              )}
-            </div>
+          <div style={{ flex: "1 1 200px" }}>
+            <p style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#3b82f6" }}>
+              {pickups.reduce((sum, p) => sum + (Number(p.weight) || 0), 0).toFixed(1)} kg
+            </p>
+            <p style={{ color: "#6b7280" }}>Total Waste Recycled</p>
+          </div>
+          <div style={{ flex: "1 1 200px" }}>
+            <p style={{ fontSize: "1.875rem", fontWeight: "bold", color: "#f59e0b" }}>
+              {(pickups.reduce((sum, p) => sum + (Number(p.weight) || 0), 0) * 1.2).toFixed(1)} kg
+            </p>
+            <p style={{ color: "#6b7280" }}>Estimated CO₂ Saved</p>
           </div>
         </div>
-      </header>
+      </div>
 
-      {/* Main Content */}
-      <main style={styles.mainContent}>
-        <div style={styles.gridContainer}>
-          {/* Welcome Section */}
-          <div style={styles.welcomeSection}>
-            <h2 style={styles.welcomeTitle}>Welcome back, {user.username || 'User'}!</h2>
-            <p style={styles.welcomeSubtext}>Ready to recycle smart today</p>
-            <button style={styles.scheduleButton} onClick={() => navigate('/schedule')}>Schedule Pickup</button>
-          </div>
-
-          {/* Upcoming Pickups */}
-          <div style={styles.card}>
-            <h3 style={styles.cardTitle}>Upcoming Pickups</h3>
-            {upcomingPickups.length > 0 ? upcomingPickups.map((pickup, index) => (
-              <div key={index} style={styles.pickupItem}>
-                <Calendar />
-                <div>
-                  <p>Type: {pickup.type || '-'}</p>
-                  <p>Address: {pickup.address || '-'}</p>
-                  <p>Date & Time: {pickup.date ? `${pickup.date}, ${pickup.time || '-'}` : '-'}</p>
-                </div>
-              </div>
-            )) : <p>No upcoming pickups</p>}
-          </div>
-
-          {/* Eco Points */}
-          <div style={styles.card}>
-            <h3 style={styles.cardTitle}>Eco Points</h3>
-            <p style={styles.statValue}>{ecoPoints}</p>
-          </div>
-
-          {/* Activity Metrics Graph */}
-          <ActivityMetricsChart pickups={pickups} />
-        </div>
-      </main>
+      {/* Monthly Activity Chart */}
+      <div style={styles.card}>
+        <h3 style={styles.cardTitle}>Monthly Activity</h3>
+        <ActivityMetricsChart pickups={pickups} />
+      </div>
     </div>
   );
+}
+
+const styles = {
+  container: { padding: "2rem", maxWidth: "1000px", margin: "auto" },
+  title: { fontSize: "1.8rem", fontWeight: "bold" },
+  subtitle: { color: "#6b7280", marginBottom: "1rem" },
+  loading: { textAlign: "center", marginTop: "20%" },
+  error: { textAlign: "center", color: "red", marginTop: "20%" },
+  cardsContainer: { display: "flex", flexWrap: "wrap", gap: "1.5rem" },
+  card: {
+    backgroundColor: "#fff",
+    padding: "1.5rem",
+    borderRadius: "1rem",
+    boxShadow: "0 4px 8px rgba(0,0,0,0.05)",
+    flex: "1 1 280px",
+  },
+  cardTitle: { fontSize: "1rem", color: "#6b7280", marginBottom: "0.5rem" },
+  statValue: { fontSize: "2rem", fontWeight: "bold", color: "#22c55e" },
 };
 
 export default UserDashboard;

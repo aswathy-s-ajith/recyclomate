@@ -1,225 +1,208 @@
-import React, { useEffect, useState } from "react";
-import { Bell } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Recycle, Bell, Calendar as LucideCalendar } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import NotificationsModal from './NotificationsModal';
+import 'react-calendar/dist/Calendar.css';
+import Calendar from 'react-calendar';
 
-function DriverDashboard() {
+const styles = {
+  container: { minHeight: '100vh', backgroundColor: '#f9fafb' },
+  header: { backgroundColor: '#ffffff', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' },
+  headerContent: { maxWidth: '1280px', margin: '0 auto', padding: '1rem 1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between' },
+  logoContainer: { display: 'flex', alignItems: 'center', gap: '0.5rem' },
+  logoIcon: { backgroundColor: '#22c55e', width: '2.5rem', height: '2.5rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  logoText: { fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' },
+  userSection: { display: 'flex', alignItems: 'center', gap: '0.75rem' },
+  notificationIcon: { cursor: 'pointer', padding: '0.5rem', borderRadius: '50%', transition: 'background-color 0.2s', position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  userAvatarContainer: { position: 'relative' },
+  userAvatar: { width: '2.5rem', height: '2.5rem', backgroundColor: '#d1d5db', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer' },
+  avatarText: { color: '#374151', fontWeight: '600' },
+  dropdown: { position: 'absolute', top: '3rem', right: '0', backgroundColor: 'white', boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)', borderRadius: '0.5rem', padding: '0.5rem', minWidth: '150px', zIndex: 1000 },
+  dropdownButton: { width: '100%', padding: '0.75rem 1rem', textAlign: 'left', border: 'none', backgroundColor: 'transparent', cursor: 'pointer', fontSize: '0.875rem', color: '#374151', borderRadius: '0.25rem', transition: 'background-color 0.2s' },
+  mainContent: { maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' },
+  gridContainer: { display: 'grid', gridTemplateColumns: '1fr', gap: '2rem' },
+  welcomeSection: { marginBottom: '1.5rem' },
+  welcomeTitle: { fontSize: '2.25rem', fontWeight: 'bold', color: '#111827', marginBottom: '0.5rem', lineHeight: '1.2' },
+  welcomeSubtext: { color: '#6b7280', marginBottom: '1.5rem' },
+  card: { backgroundColor: 'white', borderRadius: '0.75rem', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)', marginBottom: '1.5rem' },
+  cardTitle: { fontSize: '1.25rem', fontWeight: 'bold', color: '#111827', marginBottom: '1rem' },
+  statValue: { fontSize: '1.875rem', fontWeight: 'bold', color: '#111827' },
+  pickupItem: { display: 'flex', alignItems: 'flex-start', gap: '0.75rem', marginBottom: '0.75rem' },
+  calendarPickupsContainer: { display: 'flex', gap: '2rem', flexWrap: 'wrap' },
+  calendarWrapper: { flex: '1 1 300px' },
+  pickupsWrapper: { flex: '2 1 400px' },
+};
+
+const DriverDashboard = () => {
+  const navigate = useNavigate();
+  const [showDropdown, setShowDropdown] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [agentInfo, setAgentInfo] = useState(null);
+  const [driver, setDriver] = useState(null);
   const [assignedPickups, setAssignedPickups] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
-    const fetchDriverData = async () => {
-      const token = localStorage.getItem("token");
+    const fetchData = async () => {
+      const token = localStorage.getItem('token');
       if (!token) {
-        console.error("No token found");
-        setLoading(false);
+        navigate('/login');
         return;
       }
-
       try {
-        // Fetch driver profile
-        const resProfile = await fetch("http://localhost:5000/api/users/me", {
+        const res = await fetch('http://localhost:5000/api/drivers/me', {
           headers: { Authorization: `Bearer ${token}` },
         });
-        const dataProfile = await resProfile.json();
+        const data = await res.json();
+        if (res.ok) setDriver(data.driver || {});
+        else console.error(data.message);
 
-        if (!resProfile.ok) {
-          console.error("Error fetching driver info:", dataProfile.message || dataProfile);
-          setLoading(false);
-          return;
+        const resPickups = await fetch('http://localhost:5000/api/pickups/assigned', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (resPickups.ok) {
+          const d = await resPickups.json();
+          setAssignedPickups(Array.isArray(d) ? d : d.pickups || []);
         }
-
-        setAgentInfo({
-          username: dataProfile.user.username,
-          email: dataProfile.user.email,
-          phoneNumber: dataProfile.user.phoneNumber,
-          address: dataProfile.user.address,
-          profilePic: dataProfile.user.profilePic || "",
-          available: dataProfile.user.available ?? true,
-        });
-
-        // Fetch assigned pickups
-        const resPickups = await fetch("http://localhost:5000/api/pickups/assigned", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const dataPickups = await resPickups.json();
-        setAssignedPickups(Array.isArray(dataPickups) ? dataPickups : []);
       } catch (err) {
-        console.error("Fetch error:", err);
-        setAssignedPickups([]);
-      } finally {
-        setLoading(false);
+        console.error('Error fetching driver data:', err);
       }
     };
+    fetchData();
+  }, [navigate]);
 
-    fetchDriverData();
-  }, []);
+  if (!driver) return <div style={{ textAlign: 'center', marginTop: '20%' }}>Loading...</div>;
 
+  const completedPickups = assignedPickups.filter(p => p.status === 'Completed').length;
+  const totalWaste = assignedPickups
+    .filter(p => p.status === 'Completed')
+    .reduce((sum, p) => sum + (Number(p.weight) || 0), 0);
+  const efficiency = assignedPickups.length ? ((completedPickups / assignedPickups.length) * 100).toFixed(1) : 'N/A';
 
-  
-  if (loading) return <p style={{ textAlign: "center" }}>Loading...</p>;
-  if (!agentInfo) return <p style={{ textAlign: "center" }}>No driver data found.</p>;
-
-  // Metrics
-  const totalPickups = assignedPickups.length;
-  const pendingPickups = assignedPickups.filter(p => p.status !== "Completed").length;
-  const completedPickups = totalPickups - pendingPickups;
-
-  const cardStyle = {
-    padding: "20px",
-    marginBottom: "30px",
-    borderRadius: "8px",
-    backgroundColor: "#fff",
-    borderTop: "5px solid #4CAF50",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-  };
-
-  const headingStyle = { marginBottom: "15px", color: "#4CAF50" };
-  const greenButtonStyle = {
-    padding: "8px 16px",
-    backgroundColor: "#4CAF50",
-    color: "#fff",
-    border: "none",
-    borderRadius: "4px",
-    cursor: "pointer",
-    marginTop: "5px",
-  };
-
-  const toggleAvailability = () => {
-    setAgentInfo({ ...agentInfo, available: !agentInfo.available });
-  };
-
-  const handleCompletePickup = async (pickupId, ecoPoints) => {
-    const token = localStorage.getItem("token");
-    if (!token) return;
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/pickups/${pickupId}/complete`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ ecoPoints }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        alert(data.message || "Failed to mark completed");
-        return;
-      }
-
-      // Update UI
-      setAssignedPickups(prev =>
-        prev.map(p => (p._id === pickupId ? { ...p, status: "Completed", ecoPoints: data.ecoPoints } : p))
-      );
-      alert(`Pickup completed! ${data.ecoPoints} points added to user. Total: ${data.userEcoPoints}`);
-    } catch (err) {
-      console.error(err);
-      alert("Something went wrong while completing pickup");
-    }
-  };
+  const pickupsForSelectedDate = selectedDate
+    ? assignedPickups.filter(p => new Date(p.date).toDateString() === selectedDate.toDateString())
+    : assignedPickups;
 
   return (
-    <div style={{ maxWidth: "900px", margin: "20px auto", fontFamily: "Arial, sans-serif", backgroundColor: "#f4f4f4", padding: "20px", borderRadius: "8px" }}>
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", marginBottom: "30px" }}>
-        <h1 style={{ color: "#4CAF50", margin: 0 }}>Driver Dashboard</h1>
-        <div 
-          onClick={() => setShowNotifications(true)}
-          style={{ 
-            marginLeft: "20px",
-            cursor: "pointer",
-            padding: "8px",
-            borderRadius: "50%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            transition: "background-color 0.2s"
-          }}
-        >
-          <Bell size={24} color="#374151" />
+    <div style={styles.container}>
+      <header style={styles.header}>
+        <div style={styles.headerContent}>
+          <div style={styles.logoContainer}>
+            <div style={styles.logoIcon}>
+              <Recycle style={{ width: '1.5rem', height: '1.5rem', color: 'white' }} />
+            </div>
+            <h1 style={styles.logoText}>RecycloMate</h1>
+          </div>
+          <div style={styles.userSection}>
+            <div style={styles.notificationIcon} onClick={() => setShowNotifications(true)}>
+              <Bell size={20} color="#374151" />
+            </div>
+            <NotificationsModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+            <div style={styles.userAvatarContainer}>
+              <div style={styles.userAvatar} onClick={() => setShowDropdown(!showDropdown)}>
+                <span style={styles.avatarText}>{driver.username?.[0]?.toUpperCase() || 'D'}</span>
+              </div>
+              {showDropdown && (
+                <div style={styles.dropdown}>
+                  <button style={styles.dropdownButton} onClick={() => { setShowDropdown(false); navigate('/driver-profile'); }}>Edit Profile</button>
+                  <button style={styles.dropdownButton} onClick={() => { setShowDropdown(false); localStorage.removeItem('token'); navigate('/login'); }}>Logout</button>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-      </div>
-      <NotificationsModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+      </header>
 
-      {/* Driver Info */}
-      <div style={{ ...cardStyle, display: "flex", alignItems: "center" }}>
-        <img
-          src={agentInfo.profilePic || "https://via.placeholder.com/100"}
-          alt="Profile"
-          style={{ borderRadius: "50%", width: "100px", height: "100px", marginRight: "20px", border: "2px solid #4CAF50" }}
-        />
-        <div style={{ flex: 1 }}>
-          <h2 style={{ margin: "0 0 10px 0" }}>{agentInfo.username}</h2>
-          <p>Email: {agentInfo.email}</p>
-          <p>Phone: {agentInfo.phoneNumber || "Not provided"}</p>
-          <p>Address: {agentInfo.address || "Not provided"}</p>
-          <p>Status: <strong style={{ color: agentInfo.available ? "#4CAF50" : "#f44336" }}>{agentInfo.available ? "Available" : "Unavailable"}</strong></p>
-          <button style={greenButtonStyle} onClick={toggleAvailability}>Toggle Availability</button>
+      <main style={styles.mainContent}>
+        <div style={styles.gridContainer}>
+          <div style={styles.welcomeSection}>
+            <h2 style={styles.welcomeTitle}>Welcome back, {driver.username || 'Driver'}!</h2>
+            <p style={styles.welcomeSubtext}>Ready for your next collection?</p>
+          </div>
+
+          {/* Stats Cards */}
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <div style={{ ...styles.card, flex: '1 1 200px' }}>
+              <h3 style={styles.cardTitle}>Completed Pickups</h3>
+              <p style={styles.statValue}>{completedPickups}</p>
+            </div>
+            <div style={{ ...styles.card, flex: '1 1 200px' }}>
+              <h3 style={styles.cardTitle}>Total Waste Collected (kg)</h3>
+              <p style={styles.statValue}>{totalWaste}</p>
+            </div>
+            <div style={{ ...styles.card, flex: '1 1 200px' }}>
+              <h3 style={styles.cardTitle}>Efficiency</h3>
+              <p style={styles.statValue}>{efficiency !== 'N/A' ? `${efficiency}%` : 'N/A'}</p>
+            </div>
+          </div>
+
+          {/* Calendar + Pickups combined */}
+          <div style={{ ...styles.card, ...styles.calendarPickupsContainer }}>
+            <div style={styles.calendarWrapper}>
+              <h3 style={styles.cardTitle}>Schedule Overview</h3>
+              <Calendar
+                onClickDay={date => setSelectedDate(date)}
+                value={selectedDate}
+                tileContent={({ date, view }) => {
+                  if (view === 'month') {
+                    const hasPickup = assignedPickups.some(p => new Date(p.date).toDateString() === date.toDateString());
+                    return hasPickup ? <span role="img" aria-label="pickup" style={{ color: 'green', fontSize: '1.2em' }}>🛻</span> : null;
+                  }
+                  return null;
+                }}
+              />
+            </div>
+
+            <div style={styles.pickupsWrapper}>
+              <h3 style={styles.cardTitle}>My Pickups</h3>
+              {pickupsForSelectedDate.length > 0 ? pickupsForSelectedDate.map((pickup, i) => (
+                <div key={i} style={{ ...styles.pickupItem, flexDirection: 'column', alignItems: 'flex-start' }}>
+                  <p><strong>Location:</strong> {pickup.address || pickup.location || '-'}</p>
+                  <p><strong>Status:</strong> {pickup.status || '-'}</p>
+                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                    {['Accepted', 'In Progress', 'Completed'].map(status => (
+                      <button
+                        key={status}
+                        style={{
+                          padding: '0.5rem 1rem',
+                          borderRadius: '0.25rem',
+                          border: 'none',
+                          backgroundColor: pickup.status === status ? '#22c55e' : '#e5e7eb',
+                          color: pickup.status === status ? 'white' : '#374151',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          transition: 'background 0.2s',
+                        }}
+                        onClick={async () => {
+                          const token = localStorage.getItem('token');
+                          try {
+                            const res = await fetch(`http://localhost:5000/api/pickups/${pickup._id}/status`, {
+                              method: 'PATCH',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`,
+                              },
+                              body: JSON.stringify({ status }),
+                            });
+                            if (res.ok) {
+                              setAssignedPickups(prev => prev.map(p => p._id === pickup._id ? { ...p, status } : p));
+                            }
+                          } catch (err) {
+                            console.error('Failed to update status:', err);
+                          }
+                        }}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )) : <p>No pickups{selectedDate ? ' on this date' : ''}</p>}
+            </div>
+          </div>
         </div>
-      </div>
-
-      {/* Performance Metrics */}
-      <div style={cardStyle}>
-        <h3 style={headingStyle}>Performance Metrics</h3>
-        <p>Total Pickups: <strong>{totalPickups}</strong></p>
-        <p>Pending Pickups: <strong>{pendingPickups}</strong></p>
-        <p>Completed Pickups: <strong>{completedPickups}</strong></p>
-      </div>
-
-      {/* Assigned Pickups */}
-      <div style={cardStyle}>
-        <h3 style={headingStyle}>Assigned Pickups</h3>
-        {assignedPickups.length === 0 ? (
-          <p>No pickups assigned yet.</p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid #ccc" }}>
-                <th style={{ padding: "8px" }}>Date</th>
-                <th style={{ padding: "8px" }}>Time</th>
-                <th style={{ padding: "8px" }}>Type</th>
-                <th style={{ padding: "8px" }}>Address</th>
-                <th style={{ padding: "8px" }}>Status</th>
-                <th style={{ padding: "8px" }}>Action</th>
-              </tr>
-            </thead>
-            <tbody>
-              {assignedPickups.map((pickup) => (
-                <tr key={pickup._id} style={{ borderBottom: "1px solid #eee", textAlign: "center" }}>
-                  <td>{pickup.date}</td>
-                  <td>{pickup.time}</td>
-                  <td>{Array.isArray(pickup.type) ? pickup.type.join(", ") : pickup.type}</td>
-                  <td>{pickup.address}</td>
-                  <td style={{ color: pickup.status === "Completed" ? "#4CAF50" : "#333", fontWeight: "bold" }}>{pickup.status}</td>
-                  <td>
-                    {pickup.status !== "Completed" && (
-                      <div>
-                        <input
-                          type="number"
-                          placeholder="Eco points"
-                          min={0}
-                          style={{ width: "60px", marginRight: "5px" }}
-                          onChange={(e) => pickup.manualEcoPoints = Number(e.target.value)}
-                        />
-                        <button
-                          style={{ ...greenButtonStyle, padding: "5px 10px" }}
-                          onClick={() => handleCompletePickup(pickup._id, pickup.manualEcoPoints || 0)}
-                        >
-                          Complete
-                        </button>
-                      </div>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      </main>
     </div>
   );
-}
+};
 
 export default DriverDashboard;
