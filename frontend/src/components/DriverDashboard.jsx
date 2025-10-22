@@ -31,6 +31,7 @@ const styles = {
   calendarPickupsContainer: { display: 'flex', gap: '2rem', flexWrap: 'wrap' },
   calendarWrapper: { flex: '1 1 300px' },
   pickupsWrapper: { flex: '2 1 400px' },
+  dateHeader: { fontSize: '1rem', fontWeight: '600', color: '#22c55e', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' },
 };
 
 const DriverDashboard = () => {
@@ -154,6 +155,12 @@ const DriverDashboard = () => {
 
             <div style={styles.pickupsWrapper}>
               <h3 style={styles.cardTitle}>My Pickups</h3>
+              {selectedDate && (
+                <div style={styles.dateHeader}>
+                  <LucideCalendar size={18} />
+                  {selectedDate.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </div>
+              )}
               {pickupsForSelectedDate.length > 0 ? pickupsForSelectedDate.map((pickup, i) => (
                 <div key={i} style={{ ...styles.pickupItem, flexDirection: 'column', alignItems: 'flex-start' }}>
                   <p><strong>Location:</strong> {pickup.address || pickup.location || '-'}</p>

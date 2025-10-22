@@ -11,6 +11,7 @@ function DriverProfile() {
     licenseNumber: "",
     serviceArea: "",
     password: "",
+    isAvailable: false,
   });
   const [editMode, setEditMode] = useState(false);
 
@@ -34,6 +35,7 @@ function DriverProfile() {
             licenseNumber: data.driver.licenseNumber || "",
             serviceArea: data.driver.serviceArea || "",
             password: "",
+            isAvailable: data.driver.isAvailable || false,
           });
         }
       } catch (err) {
@@ -45,6 +47,10 @@ function DriverProfile() {
 
   const handleChange = (e) => {
     setDriverInfo({ ...driverInfo, [e.target.name]: e.target.value });
+  };
+
+  const handleAvailabilityToggle = () => {
+    setDriverInfo({ ...driverInfo, isAvailable: !driverInfo.isAvailable });
   };
 
   const handleProfileSave = async () => {
@@ -119,6 +125,21 @@ function DriverProfile() {
           <h2 style={{ margin: "0 0 10px 0" }}>{driverInfo.username}</h2>
           <p style={{ margin: "2px 0" }}>Email: {driverInfo.email}</p>
           <p style={{ margin: "2px 0" }}>Phone: {driverInfo.phoneNumber}</p>
+        </div>
+        <div style={{ textAlign: "center", marginLeft: "20px" }}>
+          <div style={{ marginBottom: "10px", fontWeight: "bold", color: driverInfo.isAvailable ? "#4CAF50" : "#999" }}>
+            {driverInfo.isAvailable ? "● Available" : "● Unavailable"}
+          </div>
+          <button
+            onClick={handleAvailabilityToggle}
+            style={{
+              ...greenButtonStyle,
+              backgroundColor: driverInfo.isAvailable ? "#f44336" : "#4CAF50",
+              padding: "10px 20px",
+            }}
+          >
+            {driverInfo.isAvailable ? "Go Unavailable" : "Go Available"}
+          </button>
         </div>
       </div>
       <div style={cardStyle}>
