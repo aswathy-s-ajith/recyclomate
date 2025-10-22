@@ -143,21 +143,26 @@ function SchedulePickup() {
   // Addresses fetched from backend
   const [addresses, setAddresses] = useState([]);
 
-  // Example dates and time slots
-  const availableDates = ["2025-10-19", "2025-10-20", "2025-10-21"];
+  // ✅ Generate current date and next 2 days dynamically
+  const getFormattedDate = (offset) => {
+    const date = new Date();
+    date.setDate(date.getDate() + offset);
+    return date.toISOString().split("T")[0]; // YYYY-MM-DD
+  };
+  const availableDates = [getFormattedDate(0), getFormattedDate(1), getFormattedDate(2)];
+
   const timeSlots = ["10:00 AM - 12:00 PM", "02:00 PM - 04:00 PM", "05:00 PM - 07:00 PM"];
 
-<<<<<<< HEAD
-  // All waste options including new categories
-  const wasteOptions = ["Plastic", "Paper", "Glass", "Metal", "E-Waste", "Organic Waste", "Sanitary Napkin"];
-=======
   // Waste options without Organic Waste
   const wasteOptions = ["Plastic", "Paper", "Glass", "Metal", "E-Waste","Sanitary napkin"];
->>>>>>> 8b8cfa5833009a842614db5ddb9568c712fc622f
+
 
   const [selectedWaste, setSelectedWaste] = useState([]);
   const [wasteDetail, setWasteDetail] = useState("");
   const [address, setAddress] = useState("");
+  const [pickupDate, setPickupDate] = useState(availableDates[0]);
+  const [pickupTime, setPickupTime] = useState(timeSlots[0]);
+
   // Fetch user addresses on mount
   useEffect(() => {
     const fetchAddresses = async () => {
@@ -178,8 +183,6 @@ function SchedulePickup() {
     };
     fetchAddresses();
   }, []);
-  const [pickupDate, setPickupDate] = useState(availableDates[0]);
-  const [pickupTime, setPickupTime] = useState(timeSlots[0]);
 
   const handleCheckboxChange = (waste) => {
     setSelectedWaste((prev) =>
@@ -191,28 +194,32 @@ function SchedulePickup() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const token = localStorage.getItem("token"); // ✅ get token
+    const token = localStorage.getItem("token");
 
-      if (!token) {
-        alert("You must be logged in to schedule a pickup!");
-        return;
-      }
+    if (!token) {
+      alert("You must be logged in to schedule a pickup!");
+      return;
+    }
+
     const pickupData = {
-      type: selectedWaste, // matches backend
-      wasteDetail,         // optional
+      type: selectedWaste,
+      wasteDetail,
       address,
       date: pickupDate,
       time: pickupTime,
     };
+
     console.log('Pickup scheduled:', pickupData);
     alert("Pickup Scheduled Successfully!");
-    // Add your API call here
-    fetch("http://localhost:5000/api/pickups/schedule", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-    body: JSON.stringify(pickupData),
-    });
 
+    fetch("http://localhost:5000/api/pickups/schedule", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(pickupData),
+    });
   };
 
   return (
@@ -294,7 +301,7 @@ function SchedulePickup() {
             >
               {availableDates.map((date, idx) => (
                 <option key={idx} value={date}>
-                  {date}
+                  {new Date(date).toDateString()} {/* displays readable date */}
                 </option>
               ))}
             </select>
