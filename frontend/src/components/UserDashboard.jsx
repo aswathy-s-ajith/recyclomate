@@ -47,6 +47,7 @@ const UserDashboard = () => {
   const [user, setUser] = useState(null);
   const [pickups, setPickups] = useState([]);
   const [ecoPoints, setEcoPoints] = useState(0);
+  const [hasNewNotification, setHasNewNotification] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,6 +74,29 @@ const UserDashboard = () => {
       }
     };
     fetchData();
+
+    // Set up polling for new notifications
+    const checkNotifications = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      try {
+        const res = await fetch('http://localhost:5000/api/notifications', {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        const hasUnread = data.notifications.some(notif => !notif.read);
+        setHasNewNotification(hasUnread);
+      } catch (error) {
+        console.error('Error checking notifications:', error);
+      }
+    };
+
+    // Check for new notifications every 30 seconds
+    const notificationInterval = setInterval(checkNotifications, 30000);
+    checkNotifications(); // Check immediately
+
+    return () => clearInterval(notificationInterval);
   }, [navigate]);
 
   if (!user) return <div style={{ textAlign: 'center', marginTop: '20%' }}>Loading...</div>;
@@ -93,9 +117,28 @@ const UserDashboard = () => {
           </div>
           <div style={styles.userSection}>
             <div style={styles.notificationIcon} onClick={() => setShowNotifications(true)}>
-              <Bell size={20} color="#374151" />
+              <div style={{ position: 'relative' }}>
+                <Bell size={20} color="#374151" />
+                {hasNewNotification && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '-5px',
+                    right: '-5px',
+                    width: '10px',
+                    height: '10px',
+                    backgroundColor: '#22c55e',
+                    borderRadius: '50%'
+                  }} />
+                )}
+              </div>
             </div>
-            <NotificationsModal isOpen={showNotifications} onClose={() => setShowNotifications(false)} />
+            <NotificationsModal 
+              isOpen={showNotifications} 
+              onClose={() => {
+                setShowNotifications(false);
+                setHasNewNotification(false);
+              }}
+            />
             <div style={styles.userAvatarContainer}>
               <div style={styles.userAvatar} onClick={() => setShowDropdown(!showDropdown)}>
                 <span style={styles.avatarText}>{user.username?.[0]?.toUpperCase() || 'U'}</span>
@@ -128,7 +171,7 @@ const UserDashboard = () => {
               <div key={index} style={styles.pickupItem}>
                 <Calendar />
                 <div>
-                  <p>Type: {pickup.type || '-'}</p>
+                  <p>Type: {Array.isArray(pickup.type) ? pickup.type.join(', ') : (pickup.type || '-')}</p>
                   <p>Address: {pickup.address || '-'}</p>
                   <p>Date & Time: {pickup.date ? `${pickup.date}, ${pickup.time || '-'}` : '-'}</p>
                 </div>
