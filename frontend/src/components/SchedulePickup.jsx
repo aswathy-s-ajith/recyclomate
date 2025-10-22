@@ -147,8 +147,8 @@ function SchedulePickup() {
   const availableDates = ["2025-10-19", "2025-10-20", "2025-10-21"];
   const timeSlots = ["10:00 AM - 12:00 PM", "02:00 PM - 04:00 PM", "05:00 PM - 07:00 PM"];
 
-  // Waste options without Organic Waste
-  const wasteOptions = ["Plastic", "Paper", "Glass", "Metal", "E-Waste"];
+  // All waste options including new categories
+  const wasteOptions = ["Plastic", "Paper", "Glass", "Metal", "E-Waste", "Organic Waste", "Sanitary Napkin"];
 
   const [selectedWaste, setSelectedWaste] = useState([]);
   const [wasteDetail, setWasteDetail] = useState("");
