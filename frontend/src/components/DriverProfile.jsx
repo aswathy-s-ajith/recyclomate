@@ -49,10 +49,6 @@ function DriverProfile() {
     setDriverInfo({ ...driverInfo, [e.target.name]: e.target.value });
   };
 
-  const handleAvailabilityToggle = () => {
-    setDriverInfo({ ...driverInfo, isAvailable: !driverInfo.isAvailable });
-  };
-
   const handleProfileSave = async () => {
     const token = localStorage.getItem("token");
     if (!token) return alert("You must be logged in");
@@ -61,7 +57,10 @@ function DriverProfile() {
       if (!payload.password) delete payload.password; // Only send password if changed
       const res = await fetch("http://localhost:5000/api/drivers/me", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
         body: JSON.stringify(payload),
       });
       const data = await res.json();
@@ -106,50 +105,75 @@ function DriverProfile() {
   };
 
   return (
-    <div style={{
-      maxWidth: "900px",
-      margin: "20px auto",
-      fontFamily: "Arial, sans-serif",
-      backgroundColor: "#f4f4f4",
-      padding: "20px",
-      borderRadius: "8px",
-    }}>
-      <h1 style={{ textAlign: "center", marginBottom: "30px", color: "#4CAF50" }}>Driver Profile</h1>
+    <div
+      style={{
+        maxWidth: "900px",
+        margin: "20px auto",
+        fontFamily: "Arial, sans-serif",
+        backgroundColor: "#f4f4f4",
+        padding: "20px",
+        borderRadius: "8px",
+      }}
+    >
+      <h1 style={{ textAlign: "center", marginBottom: "30px", color: "#4CAF50" }}>
+        Driver Profile
+      </h1>
+
       <div style={{ ...cardStyle, display: "flex", alignItems: "center" }}>
         <img
           src={driverInfo.profilePic || "https://via.placeholder.com/100"}
           alt="Profile"
-          style={{ borderRadius: "50%", width: "100px", height: "100px", marginRight: "20px", border: "2px solid #4CAF50" }}
+          style={{
+            borderRadius: "50%",
+            width: "100px",
+            height: "100px",
+            marginRight: "20px",
+            border: "2px solid #4CAF50",
+          }}
         />
         <div style={{ flex: 1 }}>
           <h2 style={{ margin: "0 0 10px 0" }}>{driverInfo.username}</h2>
           <p style={{ margin: "2px 0" }}>Email: {driverInfo.email}</p>
           <p style={{ margin: "2px 0" }}>Phone: {driverInfo.phoneNumber}</p>
         </div>
-        <div style={{ textAlign: "center", marginLeft: "20px" }}>
-          <div style={{ marginBottom: "10px", fontWeight: "bold", color: driverInfo.isAvailable ? "#4CAF50" : "#999" }}>
-            {driverInfo.isAvailable ? "● Available" : "● Unavailable"}
-          </div>
-          <button
-            onClick={handleAvailabilityToggle}
-            style={{
-              ...greenButtonStyle,
-              backgroundColor: driverInfo.isAvailable ? "#f44336" : "#4CAF50",
-              padding: "10px 20px",
-            }}
-          >
-            {driverInfo.isAvailable ? "Go Unavailable" : "Go Available"}
-          </button>
-        </div>
       </div>
+
       <div style={cardStyle}>
         <h3 style={{ marginBottom: "15px", color: "#4CAF50" }}>Vehicle Information</h3>
         {editMode ? (
           <>
-            <input type="text" name="vehicleType" placeholder="Vehicle Type" value={driverInfo.vehicleType} onChange={handleChange} style={inputStyle} />
-            <input type="text" name="vehicleNumber" placeholder="Vehicle Number" value={driverInfo.vehicleNumber} onChange={handleChange} style={inputStyle} />
-            <input type="text" name="licenseNumber" placeholder="License Number" value={driverInfo.licenseNumber} onChange={handleChange} style={inputStyle} />
-            <input type="text" name="serviceArea" placeholder="Service Area" value={driverInfo.serviceArea} onChange={handleChange} style={inputStyle} />
+            <input
+              type="text"
+              name="vehicleType"
+              placeholder="Vehicle Type"
+              value={driverInfo.vehicleType}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              name="vehicleNumber"
+              placeholder="Vehicle Number"
+              value={driverInfo.vehicleNumber}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              name="licenseNumber"
+              placeholder="License Number"
+              value={driverInfo.licenseNumber}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              name="serviceArea"
+              placeholder="Service Area"
+              value={driverInfo.serviceArea}
+              onChange={handleChange}
+              style={inputStyle}
+            />
           </>
         ) : (
           <>
@@ -160,24 +184,72 @@ function DriverProfile() {
           </>
         )}
       </div>
+
       <div style={cardStyle}>
         <h3 style={{ marginBottom: "15px", color: "#4CAF50" }}>Account Settings</h3>
         {editMode ? (
           <>
-            <input type="text" name="username" placeholder="Username" value={driverInfo.username} onChange={handleChange} style={inputStyle} />
-            <input type="email" name="email" placeholder="Email" value={driverInfo.email} onChange={handleChange} style={inputStyle} />
-            <input type="text" name="phoneNumber" placeholder="Phone" value={driverInfo.phoneNumber} onChange={handleChange} style={inputStyle} />
-            <input type="text" name="profilePic" placeholder="Profile Photo URL" value={driverInfo.profilePic} onChange={handleChange} style={inputStyle} />
-            <input type="password" name="password" placeholder="New Password" value={driverInfo.password} onChange={handleChange} style={inputStyle} />
-            <button style={greenButtonStyle} onClick={handleProfileSave}>Save Profile</button>
-            <button style={{ ...greenButtonStyle, backgroundColor: "#ccc", color: "#333" }} onClick={() => setEditMode(false)}>Cancel</button>
+            <input
+              type="text"
+              name="username"
+              placeholder="Username"
+              value={driverInfo.username}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            <input
+              type="email"
+              name="email"
+              placeholder="Email"
+              value={driverInfo.email}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              name="phoneNumber"
+              placeholder="Phone"
+              value={driverInfo.phoneNumber}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            <input
+              type="text"
+              name="profilePic"
+              placeholder="Profile Photo URL"
+              value={driverInfo.profilePic}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            <input
+              type="password"
+              name="password"
+              placeholder="New Password"
+              value={driverInfo.password}
+              onChange={handleChange}
+              style={inputStyle}
+            />
+            <button style={greenButtonStyle} onClick={handleProfileSave}>
+              Save Profile
+            </button>
+            <button
+              style={{ ...greenButtonStyle, backgroundColor: "#ccc", color: "#333" }}
+              onClick={() => setEditMode(false)}
+            >
+              Cancel
+            </button>
           </>
         ) : (
-          <button style={greenButtonStyle} onClick={() => setEditMode(true)}>Edit Profile</button>
+          <button style={greenButtonStyle} onClick={() => setEditMode(true)}>
+            Edit Profile
+          </button>
         )}
       </div>
+
       <div style={{ textAlign: "center", marginBottom: "50px" }}>
-        <button onClick={handleLogout} style={{ ...greenButtonStyle, padding: "10px 20px" }}>Logout</button>
+        <button onClick={handleLogout} style={{ ...greenButtonStyle, padding: "10px 20px" }}>
+          Logout
+        </button>
       </div>
     </div>
   );

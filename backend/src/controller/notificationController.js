@@ -19,6 +19,7 @@ const createNotification = async ({
       pickupId
     });
     await notification.save();
+    console.log('Notification created:', notification);
     return notification;
   } catch (error) {
     console.error('Error creating notification:', error);
@@ -26,26 +27,28 @@ const createNotification = async ({
   }
 };
 
-// Get notifications for a user/driver
-const getNotifications = async (req, res) => {
+const getNotifications = async () => {
   try {
-    const { id, role } = req.user;
-    const recipientModel = role === 'user' ? 'User' : 'Driver';
-
-    const notifications = await Notification.find({
-      recipient: id,
-      recipientModel
-    })
-    .sort({ createdAt: -1 })
-    .limit(50);
-
-    res.status(200).json({ notifications });
+    const token = localStorage.getItem('token');
+    console.log('Token:', token); // Check if token exists
+    
+    const response = await fetch('http://localhost:5000/api/notifications', {
+      headers: {
+        Authorization: Bearer ${token},
+      },
+    });
+    
+    console.log('Response status:', response.status); // Check status code
+    const data = await response.json();
+    console.log('Notifications data:', data); // See what's returned
+    
+    setNotifications(data.notifications || []); // Add fallback
   } catch (error) {
     console.error('Error fetching notifications:', error);
-    res.status(500).json({ message: 'Error fetching notifications' });
+  } finally {
+    setLoading(false);
   }
 };
-
 // Mark notification as read
 const markNotificationRead = async (req, res) => {
   try {
