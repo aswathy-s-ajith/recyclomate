@@ -27,6 +27,8 @@ app.use(cors({
 //routes
 app.use("/api/auth",authRoutes);
 app.use("/api/users",userRoutes);
+// Also expose driver self endpoints at /api/drivers to match frontend requests
+app.use("/api/drivers", userRoutes);
 app.use("/api/pickups", pickupRoutes);
 //start the server
 app.listen(PORT, () => {

@@ -1,16 +1,17 @@
 import React from 'react';
-import { Bar } from 'react-chartjs-2';
+import { Line } from 'react-chartjs-2';
 import {
   Chart as ChartJS,
   CategoryScale,
   LinearScale,
-  BarElement,
+  PointElement,
+  LineElement,
   Title,
   Tooltip,
   Legend,
 } from 'chart.js';
 
-ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend);
+ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend);
 
 const ActivityMetricsChart = ({ pickups }) => {
   // Group pickups by month
@@ -31,7 +32,10 @@ const ActivityMetricsChart = ({ pickups }) => {
       {
         label: 'Pickups per Month',
         data: counts,
-        backgroundColor: '#4CAF50',
+        borderColor: '#4CAF50',
+        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+        fill: true,
+        tension: 0.3,
       },
     ],
   };
@@ -53,7 +57,7 @@ const ActivityMetricsChart = ({ pickups }) => {
 
   return (
     <div style={{ background: 'white', borderRadius: '0.75rem', padding: '1.5rem', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', marginBottom: '1.5rem' }}>
-      <Bar data={data} options={options} />
+      <Line data={data} options={options} />
     </div>
   );
 };

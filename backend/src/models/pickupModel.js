@@ -4,7 +4,7 @@ const pickupSchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   date: { type: String, required: true },
   time: { type: String, required: true },
-  type: [{ type: String, enum: ['Plastic', 'Paper', 'Glass', 'Metal', 'E-Waste'], required: true }],
+  type: [{ type: String, enum: ['Plastic', 'Paper', 'Glass', 'Metal', 'E-Waste','Snitary Napkin'], required: true }],
   address: { type: String, required: true },
   status: { type: String, enum: ['Pending', 'Completed'], default: 'Pending' },
   assignedDriver: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver', default: null },
