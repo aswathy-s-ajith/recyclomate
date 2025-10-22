@@ -1,18 +1,14 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 function UserProfile() {
   const [userInfo, setUserInfo] = useState({
-    name: "Azeen Fathima",
-    email: "azeem@example.com",
-    phone: "+91 9876543210",
+    username: "",
+    email: "",
+    phoneNumber: "",
     profilePic: "",
   });
 
-  const [addresses, setAddresses] = useState([
-    { address: "123 Main St, City A", isDefault: true },
-    { address: "456 Park Ave, City B", isDefault: false },
-    { address: "789 Oak Rd, City C", isDefault: false },
-  ]);
+  const [addresses, setAddresses] = useState([]);
 
   const [pickupHistory] = useState([
     {
@@ -84,17 +80,66 @@ function UserProfile() {
     marginLeft: "5px",
   };
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      try {
+        const res = await fetch('http://localhost:5000/api/users/me', { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (res.ok && data.user) {
+          setUserInfo({
+            username: data.user.username || '',
+            email: data.user.email || '',
+            phoneNumber: data.user.phoneNumber || '',
+            profilePic: data.user.profilePic || '',
+          });
+          // normalize addresses array of strings or objects
+          const addrs = Array.isArray(data.user.addresses) ? data.user.addresses.map(a => (typeof a === 'string' ? { address: a, isDefault: false } : { address: a.address || '', isDefault: !!a.isDefault })) : [];
+          if (addrs.length > 0 && !addrs.some(a => a.isDefault)) addrs[0].isDefault = true;
+          setAddresses(addrs);
+        }
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+      }
+    };
+    fetchProfile();
+  }, []);
+
   const handleLogout = () => {
-    alert("Logged out successfully!");
+    localStorage.removeItem('token');
+    window.location.href = '/login';
   };
 
-  const handleProfileSave = () => {
-    alert("Profile updated successfully!");
+  const handleProfileSave = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return alert('You must be logged in');
+    try {
+      // prepare payload
+      const payload = {
+        username: userInfo.username,
+        email: userInfo.email,
+        phoneNumber: userInfo.phoneNumber,
+        addresses: addresses.map(a => a.address),
+        profilePic: userInfo.profilePic,
+      };
+      const res = await fetch('http://localhost:5000/api/users/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to update profile');
+      alert('Profile updated successfully!');
+    } catch (err) {
+      console.error('Save profile error:', err);
+      alert(err.message || 'Failed to update profile');
+    }
   };
 
   const handleAddAddress = () => {
     if (newAddress.trim() !== "") {
-      setAddresses([...addresses, { address: newAddress, isDefault: false }]);
+      setAddresses(prev => [...prev, { address: newAddress, isDefault: prev.length === 0 }]);
       setNewAddress("");
     }
   };
